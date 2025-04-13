@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Teachers Helping System - Diagrams</title>
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@10.9.3/dist/mermaid.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f7fa;
+            color: #333;
+        }
+        h1 {
+            text-align: center;
+            color: #4f46e5;
+            margin-bottom: 40px;
+        }
+        .diagram-container {
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            padding: 20px;
+            margin-bottom: 40px;
+            position: relative;
+        }
+        h2 {
+            color: #4f46e5;
+            border-bottom: 2px solid #e0e7ff;
+            padding-bottom: 10px;
+            margin-top: 0;
+        }
+        .mermaid {
+            margin: 20px auto;
+            min-height: 300px;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+        }
+        .note {
+            background: #e0f2fe;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 20px;
+            font-size: 14px;
+        }
+        .download-btn {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: #4f46e5;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: background 0.3s;
+        }
+        .download-btn:hover {
+            background: #4338ca;
+        }
+    </style>
+</head>
+<body>
+    <h1>Teachers Helping System Diagrams</h1>
+
+    <!-- System Architecture Diagram -->
+    <div class="diagram-container" id="architecture-container">
+        <button class="download-btn" onclick="downloadDiagram('architecture-container', 'system-architecture')">Download Diagram</button>
+        <h2>System Architecture Diagram</h2>
+        <div class="mermaid">
+            %%{init: {'theme': 'base', 'themeVariables': { 'primaryColor': '#e0e7ff'}}}%%
+            graph LR
+                subgraph Presentation_Layer["Presentation Layer (Frontend)"]
+                    A[HTML5] --> B[Tailwind CSS]
+                    B --> C[JavaScript]
+                    C --> D[welcome.html]
+                    C --> E[index.html]
+                end
+
+                subgraph Application_Layer["Application Layer (Backend)"]
+                    F[Flask Python] --> G[Authentication]
+                    F --> H[CRUD Operations]
+                    G --> I[Password Hashing]
+                    H --> J[File Upload]
+                end
+
+                subgraph Data_Layer["Data Layer (Database)"]
+                    K[PostgreSQL] --> L[users table]
+                    K --> M[timetable table]
+                    K --> N[notes table]
+                    K --> O[todos table]
+                end
+
+                Presentation_Layer -->|HTTP Requests| Application_Layer
+                Application_Layer -->|SQL Queries| Data_Layer
+
+                classDef frontend fill:#e0e7ff,stroke:#6366f1,stroke-width:2px;
+                classDef backend fill:#dbeafe,stroke:#3b82f6,stroke-width:2px;
+                classDef database fill:#d1fae5,stroke:#10b981,stroke-width:2px;
+                class A,B,C,D,E frontend;
+                class F,G,H,I,J backend;
+                class K,L,M,N,O database;
+        </div>
+        <div class="note">
+            <strong>Note:</strong> The system follows a 3-tier architecture with clear separation between presentation (UI), 
+            application (business logic), and data (database) layers. Frontend communicates with backend via HTTP requests, 
+            while backend interacts with PostgreSQL database using SQL queries.
+        </div>
+    </div>
+
+    <!-- Flowchart Diagram -->
+    <div class="diagram-container" id="flowchart-container">
+        <button class="download-btn" onclick="downloadDiagram('flowchart-container', 'user-flowchart')">Download Diagram</button>
+        <h2>User Authentication Flowchart</h2>
+        <div class="mermaid">
+            %%{init: {'theme': 'base', 'themeVariables': { 'primaryColor': '#e0e7ff'}}}%%
+            graph TD
+                Start([User Visits /]) --> CheckSession{Logged in?}
+                CheckSession -->|Yes| Dashboard[Dashboard]
+                CheckSession -->|No| Auth[Show Auth Page]
+
+                Auth --> Login[Login Form]
+                Auth --> Register[Register Form]
+
+                Login --> ValidateLogin[Validate Credentials]
+                ValidateLogin -->|Valid| SetSession[Set User Session]
+                ValidateLogin -->|Invalid| ErrorLogin[Show Error]
+
+                Register --> ValidateReg[Validate Inputs]
+                ValidateReg -->|Valid| CreateUser[Create Account]
+                ValidateReg -->|Invalid| ErrorReg[Show Error]
+                CreateUser --> AutoLogin[Auto Login]
+
+                SetSession --> Dashboard
+                AutoLogin --> Dashboard
+
+                Dashboard --> Timetable[Timetable Management]
+                Dashboard --> Notes[Notes System]
+                Dashboard --> Todos[Todo List]
+
+                Timetable --> AddClass[Add Class]
+                Timetable --> DeleteClass[Delete Class]
+
+                Notes --> CreateNote[Create Note]
+                Notes --> DownloadNote[Download Note]
+
+                Todos --> AddTask[Add Task]
+                Todos --> ToggleTask[Toggle Complete]
+
+                Dashboard --> Logout[Logout]
+                Logout --> ClearSession[Clear Session]
+                ClearSession --> Auth
+
+                classDef startend fill:#4f46e5,stroke:#3730a3,color:white;
+                classDef decision fill:#f9fafb,stroke:#4f46e5,stroke-width:2px;
+                classDef process fill:#e0e7ff,stroke:#6366f1;
+                classDef feature fill:#a5b4fc,stroke:#4f46e5;
+                class Start,ClearSession startend;
+                class CheckSession,ValidateLogin,ValidateReg decision;
+                class Auth,Login,Register,SetSession,AutoLogin,CreateUser process;
+                class Dashboard,Timetable,Notes,Todos,AddClass,DeleteClass,CreateNote,DownloadNote,AddTask,ToggleTask feature;
+        </div>
+        <div class="note">
+            <strong>Note:</strong> This flowchart shows the complete user journey from initial visit to dashboard interaction.
+            Key decision points include session checking and credential validation. All dashboard features operate in parallel
+            after successful authentication.
+        </div>
+    </div>
+
+    <script>
+        // Initialize Mermaid with custom config
+        mermaid.initialize({
+            startOnLoad: true,
+            theme: 'default',
+            flowchart: {
+                useMaxWidth: true,
+                htmlLabels: true,
+                curve: 'basis'
+            },
+            securityLevel: 'loose'
+        });
+
+        // Download diagram as PNG
+        function downloadDiagram(containerId, fileName) {
+            const container = document.getElementById(containerId);
+            
+            // Temporarily hide the download button for the screenshot
+            const button = container.querySelector('.download-btn');
+            button.style.visibility = 'hidden';
+            
+            html2canvas(container).then(canvas => {
+                button.style.visibility = 'visible';
+                const link = document.createElement('a');
+                link.download = `${fileName}-${new Date().toISOString().slice(0,10)}.png`;
+                link.href = canvas.toDataURL('image/png');
+                link.click();
+            });
+        }
+
+        // Force redraw if diagrams don't render initially
+        setTimeout(() => {
+            mermaid.contentLoaded();
+        }, 100);
+    </script>
+</body>
+</html>
