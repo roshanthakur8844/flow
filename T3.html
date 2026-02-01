@@ -3,420 +3,411 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Veridian MK-II // Audio & Queue</title>
-    
+    <title>Veridian Courier // Self-Transfer</title>
     <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
-
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,wght@0,300;0,600;1,300&family=Space+Mono:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
-
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;800&display=swap" rel="stylesheet">
     <style>
-        /* --- THEME TOKENS --- */
         :root {
-            --bg-deep: #020504;
-            --bg-surface: #0a120f;
-            --accent-primary: #d4ff5e;
-            --accent-warn: #ffcc00;  /* New for Queued Msgs */
-            --accent-secondary: #ff8e3c;
-            --text-main: #e8f5f1;
-            --text-muted: #5c7068;
-            --font-mono: 'Space Mono', monospace;
-            --font-display: 'Fraunces', serif;
+            --bg: #000000;
+            --panel: #0a0a0a;
+            --border: #333;
+            --primary: #ff3333; /* Red for "Courier" look */
+            --accent: #ffffff;
+            --success: #00ff66;
+            --font: 'JetBrains Mono', monospace;
         }
 
         * { box-sizing: border-box; margin: 0; padding: 0; }
-
+        
         body {
-            background-color: var(--bg-deep);
-            color: var(--text-main);
-            font-family: var(--font-mono);
+            background-color: var(--bg);
+            color: var(--accent);
+            font-family: var(--font);
             height: 100vh;
-            display: flex; align-items: center; justify-content: center;
-            overflow: hidden;
-        }
-
-        /* --- SOUND ASSETS (Hidden) --- */
-        .sfx-layer { display: none; }
-
-        /* --- UI CONTAINER --- */
-        .chat-container {
-            width: 100%; max-width: 500px; height: 95vh;
-            background: var(--bg-surface);
-            border: 1px solid rgba(212, 255, 94, 0.1);
-            border-radius: 16px;
-            box-shadow: 0 0 50px rgba(0,0,0,0.9);
-            display: flex; flex-direction: column;
-            position: relative;
-        }
-
-        /* --- CONNECTION MODAL --- */
-        .modal-overlay {
-            position: absolute; inset: 0;
-            background: rgba(2, 5, 4, 0.98);
-            z-index: 100;
             display: flex; flex-direction: column;
             align-items: center; justify-content: center;
-            padding: 30px;
-            transition: transform 0.5s ease-in-out;
-        }
-        .modal-overlay.hidden { transform: translateY(-110%); }
-
-        .brand-text {
-            font-family: var(--font-display);
-            font-size: 2rem; color: var(--accent-primary);
-            font-style: italic; margin-bottom: 20px;
         }
 
-        .input-group {
-            width: 100%; margin-bottom: 15px;
+        /* --- LAYOUT --- */
+        .courier-box {
+            width: 100%; max-width: 600px;
+            background: var(--panel);
+            border: 1px solid var(--border);
+            display: flex; flex-direction: column;
+            height: 90vh;
+            position: relative;
+            box-shadow: 0 0 50px rgba(255, 51, 51, 0.1);
         }
-        input.clean-input {
-            width: 100%; background: transparent;
-            border: none; border-bottom: 1px solid var(--text-muted);
-            color: white; font-family: var(--font-mono); font-size: 1.2rem;
-            padding: 10px 0; text-align: center;
-        }
-        input.clean-input:focus { outline: none; border-bottom-color: var(--accent-primary); }
-
-        .btn-action {
-            background: var(--accent-primary); color: black;
-            border: none; padding: 12px 24px;
-            font-family: var(--font-mono); font-weight: bold;
-            cursor: pointer; margin-top: 10px;
-            clip-path: polygon(10% 0, 100% 0, 100% 70%, 90% 100%, 0 100%, 0 30%);
-            transition: 0.2s;
-        }
-        .btn-action:hover { transform: scale(1.05); box-shadow: 0 0 15px var(--accent-primary); }
 
         /* --- HEADER --- */
         header {
-            padding: 15px 20px;
-            border-bottom: 1px solid rgba(255,255,255,0.05);
+            padding: 20px;
+            border-bottom: 1px solid var(--border);
             display: flex; justify-content: space-between; align-items: center;
+            background: #111;
         }
-        .status-badge {
-            font-size: 0.7rem; padding: 4px 8px; border-radius: 4px;
-            background: rgba(255,255,255,0.05); color: var(--text-muted);
-            display: flex; align-items: center; gap: 5px;
+        .logo { font-weight: 800; color: var(--primary); letter-spacing: -1px; font-size: 1.2rem; }
+        .mode-badge { 
+            font-size: 0.7rem; background: #222; padding: 5px 10px; border-radius: 4px;
+            border: 1px solid #444; color: #888; text-transform: uppercase;
         }
-        .status-indicator { width: 8px; height: 8px; border-radius: 50%; background: #444; transition: 0.3s; }
-        .status-indicator.online { background: var(--accent-primary); box-shadow: 0 0 10px var(--accent-primary); }
-        .status-indicator.queued { background: var(--accent-warn); animation: pulse 1s infinite; }
+
+        /* --- DASHBOARD --- */
+        .dashboard {
+            flex: 1; padding: 30px;
+            display: flex; flex-direction: column;
+            gap: 20px; overflow-y: auto;
+        }
+
+        .status-card {
+            background: rgba(255,255,255,0.03);
+            border: 1px dashed var(--border);
+            padding: 20px; text-align: center;
+        }
+        
+        .status-big { font-size: 1.5rem; font-weight: bold; margin: 10px 0; }
+        .pulse { animation: pulse 2s infinite; color: var(--primary); }
+        .connected { color: var(--success); animation: none; border-color: var(--success); }
 
         @keyframes pulse { 0% { opacity: 0.5; } 50% { opacity: 1; } 100% { opacity: 0.5; } }
 
-        /* --- MESSAGES --- */
-        .msg-area {
-            flex: 1; padding: 20px; overflow-y: auto;
-            display: flex; flex-direction: column; gap: 12px;
+        /* --- QUEUE LIST --- */
+        .queue-list {
+            flex: 1; border: 1px solid var(--border);
+            background: #000; padding: 10px;
+            overflow-y: auto;
         }
-        
-        .msg {
-            max-width: 80%; padding: 10px 14px;
-            font-size: 0.9rem; border-radius: 8px;
-            position: relative; word-wrap: break-word;
+        .q-item {
+            display: flex; justify-content: space-between;
+            padding: 10px; border-bottom: 1px solid #222;
+            font-size: 0.8rem;
         }
-        .msg-in { align-self: flex-start; background: rgba(255,255,255,0.05); border-left: 2px solid var(--accent-secondary); }
-        
-        .msg-out { align-self: flex-end; background: rgba(212, 255, 94, 0.15); border-right: 2px solid var(--accent-primary); text-align: right; }
-        
-        /* The "Queued" look */
-        .msg-queued {
-            align-self: flex-end;
-            background: rgba(255, 204, 0, 0.1);
-            border-right: 2px solid var(--accent-warn);
-            color: var(--accent-warn);
-            opacity: 0.8;
-        }
-        .msg-queued::after { content: " [QUEUED]"; font-size: 0.6rem; opacity: 0.7; }
+        .q-item:last-child { border-bottom: none; }
+        .q-status { font-weight: bold; }
+        .q-pending { color: var(--primary); }
+        .q-sent { color: var(--success); }
 
-        /* --- INPUT --- */
+        /* --- CONTROLS --- */
         .controls {
-            padding: 15px; border-top: 1px solid rgba(255,255,255,0.05);
-            display: flex; gap: 10px;
+            padding: 20px; border-top: 1px solid var(--border);
+            display: flex; gap: 10px; flex-direction: column;
         }
-        textarea {
-            flex: 1; background: transparent; border: none;
-            color: white; font-family: var(--font-mono);
-            resize: none; height: 40px; border-bottom: 1px solid #333;
+        
+        .row { display: flex; gap: 10px; }
+
+        input, button {
+            font-family: var(--font); padding: 15px; border: none; font-size: 0.9rem;
         }
-        textarea:focus { outline: none; border-bottom-color: var(--accent-primary); }
+        input { background: #1a1a1a; color: white; flex: 1; border: 1px solid #333; }
+        input:focus { outline: 1px solid var(--primary); }
+        
+        .btn-primary { 
+            background: var(--primary); color: black; font-weight: 800; 
+            cursor: pointer; text-transform: uppercase;
+        }
+        .btn-primary:hover { background: #ff6666; }
+        .btn-secondary {
+            background: #222; color: #fff; cursor: pointer; border: 1px solid #444;
+        }
+        .btn-secondary:hover { border-color: #fff; }
+
+        /* --- LOGIN SCREEN --- */
+        .login-screen {
+            position: absolute; inset: 0; background: #000; z-index: 99;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            padding: 20px;
+        }
+        .login-card {
+            width: 100%; max-width: 400px; text-align: center;
+            display: flex; flex-direction: column; gap: 15px;
+        }
 
     </style>
 </head>
 <body>
 
-    <audio id="snd-rx" src="data:audio/wav;base64,UklGRl9vT19XQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YU"></audio> 
-    <div class="chat-container">
-        
-        <div id="setupLayer" class="modal-overlay">
-            <h1 class="brand-text">Veridian MK-II</h1>
+    <div id="loginScreen" class="login-screen">
+        <h1 style="color:var(--primary); margin-bottom: 20px;">VERIDIAN COURIER</h1>
+        <div class="login-card">
+            <p style="color:#666; font-size: 0.8rem;">IDENTIFY THIS DEVICE</p>
             
-            <div id="loginStep" style="width: 100%; text-align: center;">
-                <div class="input-group">
-                    <input type="text" id="myHandleInput" class="clean-input" placeholder="CREATE YOUR ID" maxlength="12">
-                </div>
-                <button id="initBtn" class="btn-action">INITIALIZE SYSTEM</button>
-            </div>
-
-            <div id="connectStep" style="width: 100%; text-align: center; display: none;">
-                <p style="color:var(--text-muted); font-size:0.8rem;">IDENTITY ESTABLISHED</p>
-                <h2 id="myIdDisplay" style="color:var(--accent-primary); margin: 10px 0;">...</h2>
-                <br>
-                <div class="input-group">
-                    <input type="text" id="targetHandleInput" class="clean-input" placeholder="PARTNER ID">
-                </div>
-                <button id="connectBtn" class="btn-action">OPEN FREQUENCY</button>
-                <p id="queueStatus" style="margin-top:15px; font-size:0.7rem; color:var(--accent-warn); display:none;">
-                    waiting for connection...
-                </p>
-            </div>
-        </div>
-
-        <header>
-            <div style="line-height: 1;">
-                <div style="font-size: 0.8rem; color: var(--accent-primary); font-weight: bold;">SECURE LINK</div>
-                <div id="partnerDisplay" style="font-size: 0.7rem; color: var(--text-muted);">Disconnected</div>
-            </div>
-            <div class="status-badge">
-                <div id="statusDot" class="status-indicator"></div>
-                <span id="statusText">OFFLINE</span>
-            </div>
-        </header>
-
-        <div id="msgFeed" class="msg-area"></div>
-
-        <div class="controls">
-            <textarea id="msgInput" placeholder="Enter message..."></textarea>
-            <button id="sendBtn" class="btn-action" style="padding: 0 20px;">></button>
+            <button class="btn-primary" onclick="setupMode('sender')">I AM THE SENDER<br><span style="font-size:0.7rem; font-weight:400">(Work/School PC)</span></button>
+            
+            <p style="color:#444">- OR -</p>
+            
+            <button class="btn-secondary" onclick="setupMode('receiver')">I AM THE RECEIVER<br><span style="font-size:0.7rem; font-weight:400">(Home PC)</span></button>
         </div>
     </div>
 
-    <script>
-        // --- SOUND ENGINE ---
-        // Generating simple synthesized beeps so we don't need huge external files
-        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-        
-        function playTone(type) {
-            if (audioCtx.state === 'suspended') audioCtx.resume();
-            const osc = audioCtx.createOscillator();
-            const gain = audioCtx.createGain();
-            osc.connect(gain);
-            gain.connect(audioCtx.destination);
+    <div class="courier-box">
+        <header>
+            <div class="logo">V-COURIER</div>
+            <div id="modeBadge" class="mode-badge">STANDBY</div>
+        </header>
 
-            if(type === 'send') {
-                // Soft low thud
-                osc.type = 'sine';
-                osc.frequency.setValueAtTime(300, audioCtx.currentTime);
-                osc.frequency.exponentialRampToValueAtTime(50, audioCtx.currentTime + 0.1);
-                gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
-                gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.1);
-                osc.start(); osc.stop(audioCtx.currentTime + 0.1);
-            } 
-            else if (type === 'receive') {
-                // High tech ping
-                osc.type = 'square';
-                osc.frequency.setValueAtTime(800, audioCtx.currentTime);
-                osc.frequency.exponentialRampToValueAtTime(1200, audioCtx.currentTime + 0.1);
-                gain.gain.setValueAtTime(0.05, audioCtx.currentTime);
-                gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.2);
-                osc.start(); osc.stop(audioCtx.currentTime + 0.2);
-            }
-            else if (type === 'connect') {
-                // Power up
-                osc.type = 'sawtooth';
-                osc.frequency.setValueAtTime(100, audioCtx.currentTime);
-                osc.frequency.linearRampToValueAtTime(600, audioCtx.currentTime + 0.4);
-                gain.gain.setValueAtTime(0.05, audioCtx.currentTime);
-                gain.gain.linearRampToValueAtTime(0, audioCtx.currentTime + 0.4);
-                osc.start(); osc.stop(audioCtx.currentTime + 0.4);
+        <div class="dashboard">
+            <div id="statusCard" class="status-card">
+                <div style="font-size:0.8rem; color:#666;">CURRENT STATUS</div>
+                <div id="statusText" class="status-big">OFFLINE</div>
+                <div id="statusSub" style="font-size:0.8rem; color:#888;">Configure identity to begin</div>
+            </div>
+
+            <div style="display:flex; justify-content:space-between; align-items:center;">
+                <span style="font-size:0.8rem; font-weight:bold;">PAYLOAD QUEUE</span>
+                <span id="queueCount" style="font-size:0.8rem; color:#666;">0 ITEMS</span>
+            </div>
+            <div id="queueList" class="queue-list">
+                <div style="text-align:center; color:#333; padding:20px;">Queue Empty</div>
+            </div>
+        </div>
+
+        <div id="senderControls" class="controls" style="display:none;">
+            <div class="row">
+                <input type="file" id="fileInput" style="display:none" multiple>
+                <button class="btn-secondary" onclick="document.getElementById('fileInput').click()" style="width:100%">+ ADD FILES</button>
+            </div>
+            <div class="row">
+                <input id="msgInput" placeholder="Add text note...">
+                <button class="btn-primary" onclick="addText()">ADD NOTE</button>
+            </div>
+            <div style="margin-top:10px; font-size:0.7rem; color:#666; text-align:center;">
+                ⚠️ DO NOT CLOSE TAB. KEEP BROWSER OPEN.
+            </div>
+        </div>
+    </div>
+
+    <audio id="keepAliveAudio" loop>
+        <source src="data:audio/mp3;base64,//NExAAAAANIAAAAAExBTUUzLjEwMKqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq//NExAAAAANIAAAAAExBTUUzLjEwMKqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq" type="audio/mpeg">
+    </audio>
+
+    <script>
+        // --- CONFIGURATION ---
+        // Change these if you want custom IDs
+        const SENDER_ID = "veridian-sender-" + new Date().getDate(); // Changes daily to be unique
+        const RECEIVER_ID = "veridian-receiver-" + new Date().getDate();
+        
+        // --- APP STATE ---
+        let peer, conn;
+        let role = null; // 'sender' or 'receiver'
+        let queue = [];
+        let retryTimer = null;
+
+        const ui = {
+            login: document.getElementById('loginScreen'),
+            badge: document.getElementById('modeBadge'),
+            statusText: document.getElementById('statusText'),
+            statusSub: document.getElementById('statusSub'),
+            statusCard: document.getElementById('statusCard'),
+            senderControls: document.getElementById('senderControls'),
+            queueList: document.getElementById('queueList'),
+            queueCount: document.getElementById('queueCount')
+        };
+
+        // --- 1. SETUP MODE ---
+        function setupMode(selectedRole) {
+            role = selectedRole;
+            ui.login.style.display = 'none';
+            
+            // Start "Keep Alive" audio (muted but playing to keep thread active)
+            const audio = document.getElementById('keepAliveAudio');
+            audio.volume = 0.01;
+            audio.play().catch(e => console.log("Audio play blocked - interact with page first"));
+
+            if (role === 'sender') {
+                // I AM AT WORK (Sender)
+                ui.badge.innerText = "MODE: SENDER";
+                ui.badge.style.borderColor = "var(--primary)";
+                ui.senderControls.style.display = 'flex';
+                
+                initPeer(SENDER_ID);
+                startLookingForReceiver(); // Start the infinite loop immediately
+                
+            } else {
+                // I AM AT HOME (Receiver)
+                ui.badge.innerText = "MODE: RECEIVER";
+                ui.badge.style.borderColor = "var(--success)";
+                
+                initPeer(RECEIVER_ID);
+                // Receiver just waits. Sender does the work.
             }
         }
 
-        // --- APP LOGIC ---
-        const ui = {
-            layer: document.getElementById('setupLayer'),
-            step1: document.getElementById('loginStep'),
-            step2: document.getElementById('connectStep'),
-            myHandle: document.getElementById('myHandleInput'),
-            targetHandle: document.getElementById('targetHandleInput'),
-            myIdDisplay: document.getElementById('myIdDisplay'),
-            initBtn: document.getElementById('initBtn'),
-            connectBtn: document.getElementById('connectBtn'),
-            msgFeed: document.getElementById('msgFeed'),
-            input: document.getElementById('msgInput'),
-            sendBtn: document.getElementById('sendBtn'),
-            partnerDisplay: document.getElementById('partnerDisplay'),
-            statusDot: document.getElementById('statusDot'),
-            statusText: document.getElementById('statusText'),
-            queueStatus: document.getElementById('queueStatus')
-        };
-
-        let peer;
-        let conn;
-        let myId;
-        
-        // THE QUEUE: Stores messages if partner is offline
-        let messageQueue = []; 
-
-        // 1. SETUP
-        const savedHandle = localStorage.getItem('veridian_id');
-        if(savedHandle) ui.myHandle.value = savedHandle;
-
-        ui.initBtn.addEventListener('click', () => {
-            const handle = ui.myHandle.value.trim().toLowerCase();
-            if(!handle) return;
+        // --- 2. PEER INITIALIZATION ---
+        function initPeer(id) {
+            ui.statusText.innerText = "INITIALIZING NETWORK...";
+            ui.statusText.className = "status-big pulse";
             
-            ui.initBtn.textContent = "INITIALIZING...";
-            peer = new Peer(handle);
+            peer = new Peer(id);
 
-            peer.on('open', (id) => {
-                myId = id;
-                localStorage.setItem('veridian_id', id);
-                ui.step1.style.display = 'none';
-                ui.step2.style.display = 'block';
-                ui.myIdDisplay.innerText = id;
-                playTone('connect');
-                
-                // If we have a previous target, fill it
-                const savedTarget = localStorage.getItem('veridian_target');
-                if(savedTarget) ui.targetHandle.value = savedTarget;
+            peer.on('open', (myId) => {
+                console.log("My ID:", myId);
+                if(role === 'sender') {
+                    ui.statusText.innerText = "WAITING FOR RECEIVER...";
+                    ui.statusSub.innerText = "Leave this tab open. Go home.";
+                } else {
+                    ui.statusText.innerText = "READY TO RECEIVE";
+                    ui.statusSub.innerText = "Waiting for Sender to connect...";
+                }
             });
 
             peer.on('connection', (c) => {
-                // Someone is connecting to us!
                 handleConnection(c);
             });
 
             peer.on('error', (err) => {
-                console.log(err);
-                if(err.type === 'peer-unavailable') {
-                    // CRITICAL: This allows the offline logic
-                    ui.statusText.textContent = "PARTNER OFFLINE (QUEUING)";
-                    ui.statusDot.className = "status-indicator queued";
-                    ui.layer.classList.add('hidden'); // Let user into chat anyway
-                    ui.partnerDisplay.innerText = "Target: " + ui.targetHandle.value;
-                } else {
-                    alert("Error: " + err.type);
-                }
+                console.log(err.type);
+                // Ignore "peer-unavailable" errors, that's just our retry loop working
             });
-        });
+        }
 
-        // 2. CONNECTING LOGIC
-        ui.connectBtn.addEventListener('click', () => {
-            const target = ui.targetHandle.value.trim().toLowerCase();
-            if(!target) return;
-            localStorage.setItem('veridian_target', target);
+        // --- 3. AUTO-RETRY LOOP (The "Courier" Logic) ---
+        function startLookingForReceiver() {
+            // Every 5 seconds, try to connect to the Receiver ID
+            retryTimer = setInterval(() => {
+                if (!conn || !conn.open) {
+                    console.log("Pinging Receiver...");
+                    const c = peer.connect(RECEIVER_ID);
+                    
+                    c.on('open', () => {
+                        handleConnection(c);
+                    });
+                    
+                    // Note: We don't handle 'error' here because peer.on('error') catches connection failures globally
+                }
+            }, 5000);
+        }
 
-            ui.connectBtn.textContent = "SEARCHING...";
-            
-            // Attempt connection
-            const c = peer.connect(target);
-            handleConnection(c);
-        });
-
+        // --- 4. HANDLE CONNECTION ---
         function handleConnection(c) {
             conn = c;
             
-            conn.on('open', () => {
-                // SUCCESS
-                ui.layer.classList.add('hidden');
-                ui.statusText.textContent = "ONLINE & SECURE";
-                ui.statusText.style.color = "var(--accent-primary)";
-                ui.statusDot.className = "status-indicator online";
-                ui.partnerDisplay.innerText = "Connected: " + conn.peer;
-                playTone('connect');
-
-                // FLUSH QUEUE: Check if we have unsent messages
-                if(messageQueue.length > 0) {
-                    processQueue();
-                }
-            });
-
-            conn.on('data', (data) => {
-                playTone('receive');
-                addMessage(data, 'msg-in');
-            });
-
-            conn.on('close', () => {
-                ui.statusText.textContent = "SIGNAL LOST (QUEUING MODE)";
-                ui.statusDot.className = "status-indicator queued";
-                ui.statusText.style.color = "var(--accent-warn)";
-                // We don't kick the user out, we just enable queuing
-            });
-        }
-
-        // 3. SENDING / QUEUING LOGIC
-        function sendMessage() {
-            const text = ui.input.value.trim();
-            if(!text) return;
-
-            // Scenario A: Connected -> Send immediately
-            if (conn && conn.open) {
-                conn.send(text);
-                addMessage(text, 'msg-out');
-                playTone('send');
-            } 
-            // Scenario B: Disconnected -> Add to Dead Drop Queue
-            else {
-                // Create a queue object
-                const queuedMsg = {
-                    id: Date.now(),
-                    text: text,
-                    element: null // Will store DOM reference
-                };
-                
-                messageQueue.push(queuedMsg);
-                
-                // Show in UI as "Queued" (Yellow)
-                const el = addMessage(text, 'msg-queued');
-                queuedMsg.element = el;
-                
-                // Try to reconnect in background if we have a target
-                const target = ui.targetHandle.value || localStorage.getItem('veridian_target');
-                if(target && (!conn || !conn.open)) {
-                    console.log("Attempting background reconnect...");
-                    conn = peer.connect(target);
-                    handleConnection(conn);
-                }
-            }
+            // Update UI
+            ui.statusText.innerText = "LINK ESTABLISHED";
+            ui.statusText.className = "status-big connected";
+            ui.statusCard.style.borderColor = "var(--success)";
             
-            ui.input.value = '';
-            ui.input.focus();
-        }
+            if (role === 'sender') {
+                ui.statusSub.innerText = "Offloading data to Home PC...";
+                processQueue(); // SEND EVERYTHING
+            } else {
+                ui.statusSub.innerText = "Incoming transmission...";
+                
+                c.on('data', (data) => {
+                    receiveData(data);
+                });
+            }
 
-        // 4. PROCESS QUEUE (The "Dead Drop" delivery)
-        function processQueue() {
-            // Loop through queue and send everything
-            messageQueue.forEach((item) => {
-                conn.send(item.text);
-                // Update UI: Change Yellow (Queued) to Green (Sent)
-                if(item.element) {
-                    item.element.classList.remove('msg-queued');
-                    item.element.classList.add('msg-out');
-                }
+            c.on('close', () => {
+                ui.statusText.innerText = role === 'sender' ? "WAITING..." : "DISCONNECTED";
+                ui.statusText.className = "status-big pulse";
+                ui.statusCard.style.borderColor = "var(--border)";
+                conn = null;
             });
-            // Clear queue
-            messageQueue = [];
-            playTone('send'); // Confirmation sound
         }
 
-        function addMessage(text, type) {
-            const div = document.createElement('div');
-            div.className = `msg ${type}`;
-            div.innerText = text;
-            ui.msgFeed.appendChild(div);
-            ui.msgFeed.scrollTop = ui.msgFeed.scrollHeight;
-            return div;
-        }
-
-        ui.sendBtn.addEventListener('click', sendMessage);
-        ui.input.addEventListener('keydown', (e) => {
-            if(e.key === 'Enter' && !e.shiftKey) {
-                e.preventDefault();
-                sendMessage();
+        // --- 5. DATA HANDLING ---
+        
+        // --- SENDER SIDE ---
+        document.getElementById('fileInput').addEventListener('change', (e) => {
+            for(let file of e.target.files) {
+                addToQueue({
+                    type: 'file',
+                    blob: file, // Store raw file object
+                    name: file.name,
+                    size: file.size,
+                    mime: file.type
+                });
             }
         });
+
+        function addText() {
+            const input = document.getElementById('msgInput');
+            if(!input.value) return;
+            addToQueue({ type: 'text', content: input.value });
+            input.value = '';
+        }
+
+        function addToQueue(item) {
+            queue.push(item);
+            renderQueue();
+            
+            // If we happen to be connected already, send immediately
+            if(conn && conn.open) processQueue();
+        }
+
+        function processQueue() {
+            queue.forEach((item, index) => {
+                if(item.status === 'sent') return;
+
+                // Send
+                if(item.type === 'text') {
+                    conn.send({ type: 'text', content: item.content });
+                } else {
+                    conn.send({ 
+                        type: 'file', 
+                        file: new Blob([item.blob], {type: item.mime}), // Re-wrap blob 
+                        name: item.name,
+                        mime: item.mime
+                    });
+                }
+                
+                // Mark Sent
+                queue[index].status = 'sent';
+            });
+            renderQueue();
+        }
+
+        function renderQueue() {
+            ui.queueList.innerHTML = '';
+            ui.queueCount.innerText = queue.length + " ITEMS";
+
+            queue.forEach(item => {
+                const div = document.createElement('div');
+                div.className = 'q-item';
+                
+                let label = item.type === 'text' ? `NOTE: ${item.content}` : `FILE: ${item.name}`;
+                let statusClass = item.status === 'sent' ? 'q-sent' : 'q-pending';
+                let statusText = item.status === 'sent' ? 'SENT' : 'PENDING';
+
+                div.innerHTML = `
+                    <span style="white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:70%;">${label}</span>
+                    <span class="q-status ${statusClass}">${statusText}</span>
+                `;
+                ui.queueList.appendChild(div);
+            });
+        }
+
+        // --- RECEIVER SIDE ---
+        function receiveData(data) {
+            const div = document.createElement('div');
+            div.className = 'q-item';
+            div.style.background = '#111';
+            
+            if (data.type === 'text') {
+                div.innerHTML = `<span>NOTE: ${data.content}</span> <span class="q-sent">RECEIVED</span>`;
+            } else {
+                // Auto Download
+                const blob = new Blob([data.file], {type: data.mime});
+                const url = URL.createObjectURL(blob);
+                
+                // Trigger download automatically if possible, or show link
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = data.name;
+                div.innerHTML = `<span>FILE: ${data.name}</span> <a href="${url}" download="${data.name}" class="q-sent" style="cursor:pointer">DOWNLOAD</a>`;
+                
+                // Optional: Auto-click to download immediately
+                // a.click(); 
+            }
+            ui.queueList.appendChild(div);
+        }
+
+        // --- WARNING ON CLOSE ---
+        window.onbeforeunload = function() {
+            if (role === 'sender' && queue.length > 0) {
+                return "If you close this tab, your files will not be sent to your home PC.";
+            }
+        };
 
     </script>
 </body>
