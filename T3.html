@@ -3,300 +3,326 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Secure Voice Link</title>
+    <title>GHOST LINK // TACTICAL</title>
     <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     
     <style>
         :root {
-            --bg-color: #0a0a0a;
-            --text-color: #e0e0e0;
-            --accent-color: #00ff88; /* Matrix/Cyberpunk Green */
-            --danger-color: #ff3333;
-            --panel-bg: #111;
+            --bg-dark: #050505;
+            --card-bg: #111;
+            --neon-blue: #00f3ff;
+            --neon-green: #00ff88;
+            --neon-red: #ff3333;
+            --text-gray: #888;
         }
 
         body {
-            background-color: var(--bg-color);
-            color: var(--text-color);
-            font-family: 'Courier New', monospace; /* Monospace for "Hacker" feel */
+            background-color: var(--bg-dark);
+            color: white;
+            font-family: 'Courier New', monospace;
+            margin: 0;
+            height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            perspective: 1000px; /* Essential for 3D Flip */
+            background-image: 
+                linear-gradient(rgba(0, 255, 136, 0.03) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(0, 255, 136, 0.03) 1px, transparent 1px);
+            background-size: 40px 40px;
+        }
+
+        /* --- THE STAGE --- */
+        .interface-stage {
+            display: flex;
+            gap: 50px;
+            align-items: center;
+        }
+
+        /* --- THE CARDS --- */
+        .card {
+            width: 300px;
+            height: 400px;
+            background: rgba(17, 17, 17, 0.9);
+            border: 1px solid #333;
+            border-radius: 12px;
+            position: relative;
             display: flex;
             flex-direction: column;
             align-items: center;
-            justify-content: center;
-            height: 100vh;
-            margin: 0;
-            overflow: hidden;
-        }
-
-        /* --- THE ANIMATION CONTAINER --- */
-        .visualizer-container {
-            position: relative;
-            width: 200px;
-            height: 200px;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            margin-bottom: 40px;
-        }
-
-        .core-circle {
-            width: 80px;
-            height: 80px;
-            background: #222;
-            border-radius: 50%;
-            border: 2px solid var(--accent-color);
-            z-index: 10;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 24px;
-            box-shadow: 0 0 15px rgba(0, 255, 136, 0.2);
-            transition: all 0.3s ease;
-        }
-
-        /* The Ripples (CSS Animation) */
-        .ripple {
-            position: absolute;
-            border: 1px solid var(--accent-color);
-            border-radius: 50%;
+            padding: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.8);
+            
+            /* 3D Flip Setup */
+            transform-style: preserve-3d;
+            transform: rotateY(90deg); /* Start Hidden (Sideways) */
             opacity: 0;
-            width: 100%;
-            height: 100%;
+            transition: all 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275);
         }
 
-        /* Animation States */
-        .animate-call .ripple {
-            animation: ripple-effect 2s infinite linear;
+        /* When the class .visible is added, flip to front */
+        .card.visible {
+            transform: rotateY(0deg);
+            opacity: 1;
+        }
+
+        /* Active Connection Pulse */
+        .card.connected {
+            border-color: var(--neon-green);
+            box-shadow: 0 0 30px rgba(0, 255, 136, 0.15);
+            animation: breathe 3s infinite ease-in-out;
+        }
+
+        @keyframes breathe {
+            0% { box-shadow: 0 0 20px rgba(0, 255, 136, 0.1); }
+            50% { box-shadow: 0 0 50px rgba(0, 255, 136, 0.4); }
+            100% { box-shadow: 0 0 20px rgba(0, 255, 136, 0.1); }
+        }
+
+        /* --- CARD INTERNALS --- */
+        .avatar-box {
+            width: 100px;
+            height: 100px;
+            border-radius: 50%;
+            border: 2px dashed #444;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 30px;
+            margin-bottom: 20px;
+            color: #444;
+            position: relative;
+        }
+
+        /* The Spinning Ring around Avatar */
+        .card.connected .avatar-box {
+            border-color: var(--neon-green);
+            color: var(--neon-green);
         }
         
-        .animate-call .ripple:nth-child(1) { animation-delay: 0s; }
-        .animate-call .ripple:nth-child(2) { animation-delay: 0.6s; }
-        .animate-call .ripple:nth-child(3) { animation-delay: 1.2s; }
-
-        @keyframes ripple-effect {
-            0% { transform: scale(0.5); opacity: 0.8; border-width: 4px; }
-            100% { transform: scale(2.5); opacity: 0; border-width: 0px; }
+        .card.connected .avatar-box::after {
+            content: '';
+            position: absolute;
+            top: -10px; left: -10px; right: -10px; bottom: -10px;
+            border-radius: 50%;
+            border: 2px solid transparent;
+            border-top-color: var(--neon-green);
+            animation: spin 2s linear infinite;
         }
 
-        /* --- UI ELEMENTS --- */
-        .status-badge {
-            margin-bottom: 20px;
-            padding: 5px 15px;
-            background: #1a1a1a;
-            border: 1px solid #333;
-            border-radius: 4px;
-            font-size: 0.8rem;
-            letter-spacing: 2px;
-            text-transform: uppercase;
-        }
+        @keyframes spin { 100% { transform: rotate(360deg); } }
 
-        .control-panel {
-            background: var(--panel-bg);
-            padding: 30px;
-            border-radius: 10px;
-            border: 1px solid #333;
-            width: 300px;
-            text-align: center;
-            box-shadow: 0 20px 50px rgba(0,0,0,0.5);
-        }
+        h2 { font-size: 14px; letter-spacing: 3px; color: var(--text-gray); margin-bottom: 5px; }
+        h1 { font-size: 24px; margin: 0 0 20px 0; text-transform: uppercase; }
 
         input {
-            width: 90%;
-            padding: 10px;
-            margin: 10px 0;
             background: #000;
             border: 1px solid #333;
-            color: var(--accent-color);
-            font-family: inherit;
+            color: var(--neon-blue);
+            padding: 10px;
             text-align: center;
+            font-family: inherit;
+            width: 80%;
+            margin-bottom: 15px;
             outline: none;
+            transition: 0.3s;
         }
-        
-        input:focus { border-color: var(--accent-color); }
+        input:focus { border-color: var(--neon-blue); box-shadow: 0 0 10px rgba(0, 243, 255, 0.2); }
 
-        .btn-group {
-            display: flex;
-            justify-content: space-between;
-            margin-top: 20px;
-        }
-
-        button {
-            flex: 1;
+        /* --- BUTTONS --- */
+        .btn {
+            width: 100%;
             padding: 12px;
-            margin: 0 5px;
             border: none;
             cursor: pointer;
             font-weight: bold;
             font-family: inherit;
-            transition: 0.2s;
+            margin-top: auto; /* Push to bottom */
+            letter-spacing: 2px;
+            transition: 0.3s;
         }
 
-        .btn-call { background: var(--accent-color); color: #000; }
-        .btn-call:hover { background: #00cc6a; box-shadow: 0 0 15px var(--accent-color); }
-        
-        .btn-end { background: #333; color: #fff; }
-        .btn-end:hover { background: var(--danger-color); }
+        .btn-init { background: var(--neon-blue); color: #000; }
+        .btn-init:hover { box-shadow: 0 0 20px var(--neon-blue); }
 
-        /* Hidden audio element */
-        audio { display: none; }
+        .btn-call { background: var(--neon-green); color: #000; }
+        .btn-call:hover { box-shadow: 0 0 20px var(--neon-green); }
+
+        .btn-end { background: var(--neon-red); color: #000; display: none; }
+
+        /* --- CONNECTION LINE (The "Wire") --- */
+        .connection-line {
+            position: absolute;
+            height: 2px;
+            background: #222;
+            width: 0; /* Starts at 0 */
+            left: 50%;
+            top: 50%;
+            transform: translate(-50%, -50%);
+            z-index: -1;
+            transition: width 1s ease;
+        }
         
-        /* Security Log Styles */
-        .security-log {
-            margin-top: 15px;
+        .connection-line.active {
+            width: 360px; /* Distance between cards */
+            background: var(--neon-green);
+            box-shadow: 0 0 15px var(--neon-green);
+        }
+
+        /* --- STATUS LOG --- */
+        .log-display {
+            position: absolute;
+            bottom: 20px;
             font-size: 10px;
-            color: #555;
-            text-align: left;
-            height: 60px;
-            overflow: hidden;
-            border-top: 1px solid #222;
-            padding-top: 5px;
+            color: #444;
+            max-width: 400px;
+            text-align: center;
         }
+
     </style>
 </head>
 <body>
 
-    <div class="visualizer-container" id="visualizer">
-        <div class="ripple"></div>
-        <div class="ripple"></div>
-        <div class="ripple"></div>
-        <div class="core-circle">
-            <i class="fas fa-microphone-slash" id="mic-icon"></i>
-        </div>
-    </div>
-
-    <div class="status-badge" id="status-text">SYSTEM OFFLINE</div>
-
-    <div class="control-panel">
-        <div style="margin-bottom:15px; font-size: 12px; color: #777;">IDENTITY CONFIGURATION</div>
-        
-        <input type="text" id="my-id" placeholder="Create Your Secret Key">
-        <button class="btn-end" onclick="initializePeer()" style="width:100%; margin:0;">INITIALIZE LINK</button>
-        
-        <div style="margin: 20px 0; border-bottom: 1px solid #333;"></div>
-
-        <input type="text" id="remote-id" placeholder="Enter Target Secret Key">
-        
-        <div class="btn-group">
-            <button class="btn-call" onclick="startCall()">ESTABLISH LINK</button>
-            <button class="btn-end" onclick="endCall()">TERMINATE</button>
-        </div>
-
-        <div class="security-log" id="log-box">
-            > Waiting for initialization...
-        </div>
-    </div>
-
     <audio id="remote-audio" autoplay></audio>
 
+    <div class="interface-stage">
+        
+        <div class="card" id="card-local">
+            <div class="avatar-box"><i class="fas fa-user-astronaut"></i></div>
+            <h2>IDENTITY</h2>
+            <h1 id="display-my-id">UNKNOWN</h1>
+            
+            <div id="init-panel" style="width: 100%; text-align: center;">
+                <input type="text" id="my-id-input" placeholder="CREATE SECRET KEY">
+                <button class="btn btn-init" onclick="initializeSelf()">INITIALIZE</button>
+            </div>
+
+            <div id="local-status" style="margin-top: 20px; color: var(--neon-green); display:none;">
+                <i class="fas fa-check-circle"></i> SYSTEM READY
+            </div>
+        </div>
+
+        <div class="connection-line" id="wire"></div>
+
+        <div class="card" id="card-remote">
+            <div class="avatar-box"><i class="fas fa-user-secret"></i></div>
+            <h2>TARGET</h2>
+            <h1 id="display-remote-id">WAITING...</h1>
+            
+            <div id="call-panel" style="width: 100%; text-align: center;">
+                <input type="text" id="remote-id-input" placeholder="ENTER TARGET KEY">
+                <button class="btn btn-call" onclick="startCall()">CONNECT LINK</button>
+            </div>
+
+            <button class="btn btn-end" id="btn-end" onclick="endCall()">TERMINATE LINK</button>
+        </div>
+
+    </div>
+
+    <div class="log-display" id="system-log">> SYSTEM BOOT SEQUENCE INITIATED...</div>
+
     <script>
+        // --- VISUAL LOGIC ---
+        const localCard = document.getElementById('card-local');
+        const remoteCard = document.getElementById('card-remote');
+        const wire = document.getElementById('wire');
+        const log = document.getElementById('system-log');
+
+        // 1. Initial Load Animation
+        window.onload = () => {
+            setTimeout(() => {
+                localCard.classList.add('visible'); // Flip in Local Card
+                log.innerText = "> WAITING FOR IDENTITY GENERATION...";
+            }, 500);
+        };
+
+        // --- WEBRTC LOGIC ---
         let peer;
         let localStream;
         let currentCall;
-        const logBox = document.getElementById('log-box');
-        const statusText = document.getElementById('status-text');
-        const visualizer = document.getElementById('visualizer');
-        const micIcon = document.getElementById('mic-icon');
 
-        // --- 1. SYSTEM LOGGING FUNCTION (Makes it look like "Ciphering") ---
-        function systemLog(msg) {
-            const timestamp = new Date().toLocaleTimeString();
-            logBox.innerHTML += `<div>> [${timestamp}] ${msg}</div>`;
-            logBox.scrollTop = logBox.scrollHeight;
-        }
+        function initializeSelf() {
+            const myId = document.getElementById('my-id-input').value;
+            if (!myId) return;
 
-        // --- 2. INITIALIZE "ME" ---
-        function initializePeer() {
-            const myId = document.getElementById('my-id').value;
-            if (!myId) return alert("Please enter a Secret Key first.");
+            // Lock UI
+            document.getElementById('init-panel').style.display = 'none';
+            document.getElementById('display-my-id').innerText = myId;
+            document.getElementById('local-status').style.display = 'block';
 
-            // Create Peer with clean ID
+            // Init Peer
             peer = new Peer(myId);
 
             peer.on('open', (id) => {
-                systemLog(`Identity confirmed: ${id}`);
-                systemLog(`Encryption Engine (DTLS-SRTP): ACTIVE`);
-                statusText.innerText = "SYSTEM IDLE - SECURE";
-                statusText.style.color = "#00ff88";
-                statusText.style.border = "1px solid #00ff88";
+                log.innerText = "> IDENTITY CONFIRMED. WAITING FOR TARGET...";
                 
-                // Ask for Mic Permission immediately
+                // Get Mic Access
                 navigator.mediaDevices.getUserMedia({ audio: true }).then((stream) => {
                     localStream = stream;
-                    micIcon.classList.remove('fa-microphone-slash');
-                    micIcon.classList.add('fa-microphone');
-                    systemLog("Microphone Access: GRANTED");
-                }).catch(err => systemLog("Microphone Access: DENIED"));
+                    // ANIMATION: FLIP IN REMOTE CARD NOW
+                    setTimeout(() => {
+                        remoteCard.classList.add('visible');
+                    }, 500);
+                });
             });
 
-            peer.on('error', (err) => {
-                systemLog(`Error: ${err.type}`);
-            });
-
-            // --- 3. HANDLE INCOMING CALLS ---
+            // Handle Incoming Call
             peer.on('call', (call) => {
-                systemLog(`Incoming transmission from: ${call.peer}`);
-                
-                // Auto-answer or manual? Let's auto-answer for seamlessness, 
-                // but strictly only if we have a stream.
-                if(confirm(`Incoming Secure Link from "${call.peer}". Accept?`)){
-                    call.answer(localStream); // Send our audio back
-                    handleStream(call);
-                    activateVisualizer();
-                } else {
-                    systemLog("Connection rejected by user.");
-                }
+                // Auto Accept for Demo Style
+                log.innerText = "> INCOMING CONNECTION INTERCEPTED...";
+                call.answer(localStream);
+                handleCall(call);
             });
         }
 
-        // --- 4. START OUTGOING CALL ---
         function startCall() {
-            const remoteId = document.getElementById('remote-id').value;
-            if (!remoteId) return alert("Enter a target key.");
-            if (!localStream) return alert("Microphone not ready.");
+            const remoteId = document.getElementById('remote-id-input').value;
+            if (!remoteId) return;
 
-            systemLog(`Attempting handshake with: ${remoteId}...`);
-            statusText.innerText = "ESTABLISHING LINK...";
+            document.getElementById('display-remote-id').innerText = remoteId;
+            log.innerText = "> ESTABLISHING ENCRYPTED TUNNEL...";
 
             const call = peer.call(remoteId, localStream);
-            handleStream(call);
+            handleCall(call);
         }
 
-        // --- 5. HANDLE THE AUDIO STREAM (The "Cipher" happens here automatically) ---
-        function handleStream(call) {
+        function handleCall(call) {
             currentCall = call;
 
+            // UI UPDATES FOR CONNECTION
+            document.getElementById('call-panel').style.display = 'none';
+            document.getElementById('btn-end').style.display = 'block';
+            
+            // ANIMATION: CONNECT THE CARDS
+            wire.classList.add('active');
+            localCard.classList.add('connected');
+            remoteCard.classList.add('connected');
+
+            // Handle Stream
             call.on('stream', (remoteStream) => {
                 const audio = document.getElementById('remote-audio');
                 audio.srcObject = remoteStream;
-                
-                systemLog("Secure Channel Established.");
-                systemLog("Audio Decryption: REAL-TIME");
-                
-                statusText.innerText = "CONNECTED // ENCRYPTED";
-                activateVisualizer();
+                log.innerText = "> AUDIO STREAM: SECURE [DTLS-SRTP]";
             });
 
-            call.on('close', () => {
-                endCall();
-            });
+            call.on('close', () => resetUI());
         }
 
-        // --- 6. END CALL ---
         function endCall() {
-            if (currentCall) currentCall.close();
-            statusText.innerText = "SYSTEM IDLE";
-            visualizer.classList.remove('animate-call');
-            micIcon.style.color = "#e0e0e0";
-            systemLog("Link Terminated.");
+            if(currentCall) currentCall.close();
+            resetUI();
         }
 
-        // --- 7. ANIMATION LOGIC ---
-        function activateVisualizer() {
-            visualizer.classList.add('animate-call');
-            micIcon.style.color = "#00ff88";
-            // In a real app, we would use WebAudioAPI to make the circle scale with volume.
-            // For now, the CSS pulse simulates the "Active Call" state.
+        function resetUI() {
+            wire.classList.remove('active');
+            localCard.classList.remove('connected');
+            remoteCard.classList.remove('connected');
+            document.getElementById('call-panel').style.display = 'block';
+            document.getElementById('btn-end').style.display = 'none';
+            document.getElementById('display-remote-id').innerText = "WAITING...";
+            log.innerText = "> LINK TERMINATED.";
         }
     </script>
 </body>
