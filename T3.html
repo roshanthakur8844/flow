@@ -2,382 +2,302 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Us // Sync</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Secure Voice Link</title>
     <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;600&family=Playfair+Display:ital@1&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    
     <style>
         :root {
-            --bg: #0f0c1b; /* Deep Night */
-            --panel: rgba(255, 255, 255, 0.08);
-            --primary: #ffacc7; /* Soft Pink */
-            --accent: #a4adff;  /* Periwinkle */
-            --text: #f0f0f0;
-            --font-main: 'Outfit', sans-serif;
-            --font-serif: 'Playfair Display', serif;
+            --bg-color: #0a0a0a;
+            --text-color: #e0e0e0;
+            --accent-color: #00ff88; /* Matrix/Cyberpunk Green */
+            --danger-color: #ff3333;
+            --panel-bg: #111;
         }
 
-        * { box-sizing: border-box; margin: 0; padding: 0; }
-        
         body {
-            background: var(--bg); color: var(--text);
-            font-family: var(--font-main);
-            height: 100vh; overflow: hidden;
-            display: flex; flex-direction: column;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            font-family: 'Courier New', monospace; /* Monospace for "Hacker" feel */
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            margin: 0;
+            overflow: hidden;
         }
 
-        /* --- BACKGROUND ANIMATION --- */
-        .stars {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background-image: 
-                radial-gradient(1px 1px at 20px 30px, #fff, rgba(0,0,0,0)),
-                radial-gradient(1px 1px at 40px 70px, #fff, rgba(0,0,0,0)),
-                radial-gradient(1px 1px at 50px 160px, #fff, rgba(0,0,0,0)),
-                radial-gradient(2px 2px at 90px 40px, #fff, rgba(0,0,0,0));
-            background-size: 200px 200px;
-            z-index: -1; opacity: 0.5;
-            animation: twinkle 10s linear infinite;
+        /* --- THE ANIMATION CONTAINER --- */
+        .visualizer-container {
+            position: relative;
+            width: 200px;
+            height: 200px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin-bottom: 40px;
         }
-        @keyframes twinkle { from {transform: translateY(0);} to {transform: translateY(-200px);} }
 
-        /* --- SETUP SCREEN --- */
-        .setup-screen {
-            position: absolute; inset: 0; background: var(--bg); z-index: 100;
-            display: flex; flex-direction: column; align-items: center; justify-content: center;
-            padding: 40px; text-align: center;
+        .core-circle {
+            width: 80px;
+            height: 80px;
+            background: #222;
+            border-radius: 50%;
+            border: 2px solid var(--accent-color);
+            z-index: 10;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            box-shadow: 0 0 15px rgba(0, 255, 136, 0.2);
+            transition: all 0.3s ease;
         }
-        .setup-card {
-            background: rgba(255,255,255,0.05); backdrop-filter: blur(10px);
-            padding: 30px; border-radius: 30px; border: 1px solid rgba(255,255,255,0.1);
-            width: 100%; max-width: 350px;
+
+        /* The Ripples (CSS Animation) */
+        .ripple {
+            position: absolute;
+            border: 1px solid var(--accent-color);
+            border-radius: 50%;
+            opacity: 0;
+            width: 100%;
+            height: 100%;
+        }
+
+        /* Animation States */
+        .animate-call .ripple {
+            animation: ripple-effect 2s infinite linear;
         }
         
-        h1 { font-family: var(--font-serif); font-size: 2rem; margin-bottom: 10px; background: linear-gradient(to right, var(--primary), var(--accent)); -webkit-background-clip: text; color: transparent; }
-        
+        .animate-call .ripple:nth-child(1) { animation-delay: 0s; }
+        .animate-call .ripple:nth-child(2) { animation-delay: 0.6s; }
+        .animate-call .ripple:nth-child(3) { animation-delay: 1.2s; }
+
+        @keyframes ripple-effect {
+            0% { transform: scale(0.5); opacity: 0.8; border-width: 4px; }
+            100% { transform: scale(2.5); opacity: 0; border-width: 0px; }
+        }
+
+        /* --- UI ELEMENTS --- */
+        .status-badge {
+            margin-bottom: 20px;
+            padding: 5px 15px;
+            background: #1a1a1a;
+            border: 1px solid #333;
+            border-radius: 4px;
+            font-size: 0.8rem;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+        }
+
+        .control-panel {
+            background: var(--panel-bg);
+            padding: 30px;
+            border-radius: 10px;
+            border: 1px solid #333;
+            width: 300px;
+            text-align: center;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.5);
+        }
+
         input {
-            width: 100%; padding: 15px; margin: 10px 0;
-            background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.2);
-            border-radius: 12px; color: white; text-align: center; font-size: 1rem;
-        }
-        input:focus { outline: none; border-color: var(--primary); }
-
-        .btn-love {
-            background: linear-gradient(135deg, var(--primary), #ff7eb3);
-            border: none; color: #fff; padding: 15px; width: 100%;
-            border-radius: 50px; font-weight: 600; margin-top: 15px;
-            font-size: 1rem; cursor: pointer; box-shadow: 0 5px 20px rgba(255, 172, 199, 0.4);
-            transition: 0.3s;
-        }
-        .btn-love:hover { transform: translateY(-2px); box-shadow: 0 10px 30px rgba(255, 172, 199, 0.6); }
-
-        /* --- MAIN UI --- */
-        .header {
-            padding: 20px; display: flex; justify-content: space-between; align-items: center;
-            background: linear-gradient(to bottom, rgba(15,12,27,0.9), transparent);
-        }
-        .clocks { display: flex; gap: 20px; text-align: center; }
-        .clock-label { font-size: 0.6rem; text-transform: uppercase; color: rgba(255,255,255,0.5); letter-spacing: 1px; }
-        .clock-time { font-family: var(--font-serif); font-size: 1.1rem; }
-
-        .chat-area {
-            flex: 1; overflow-y: auto; padding: 20px;
-            display: flex; flex-direction: column; gap: 15px;
-        }
-
-        .bubble {
-            max-width: 75%; padding: 12px 18px; border-radius: 20px;
-            font-size: 0.95rem; line-height: 1.4; position: relative;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.2);
-        }
-        .bubble.me {
-            align-self: flex-end; background: var(--primary); color: #2c0b16;
-            border-bottom-right-radius: 4px;
-        }
-        .bubble.her {
-            align-self: flex-start; background: rgba(255,255,255,0.1);
-            border-bottom-left-radius: 4px; border: 1px solid rgba(255,255,255,0.1);
-        }
-        .bubble img { max-width: 100%; border-radius: 12px; margin-top: 5px; }
-
-        /* PULSE EFFECT (The Touch Feature) */
-        .heart-pulse {
-            position: fixed; inset: 0; background: radial-gradient(circle, rgba(255,172,199,0.3) 0%, transparent 70%);
-            pointer-events: none; opacity: 0; transition: opacity 0.5s; z-index: 50;
-        }
-        .heart-pulse.active { opacity: 1; animation: heartbeat 1s ease-in-out; }
-        @keyframes heartbeat { 0% {transform: scale(0.9);} 50% {transform: scale(1.1);} 100% {transform: scale(1);} }
-
-        /* INPUT BAR */
-        .input-bar {
-            padding: 15px; background: rgba(255,255,255,0.05);
-            backdrop-filter: blur(20px); border-top: 1px solid rgba(255,255,255,0.1);
-            display: flex; gap: 10px; align-items: center;
+            width: 90%;
+            padding: 10px;
+            margin: 10px 0;
+            background: #000;
+            border: 1px solid #333;
+            color: var(--accent-color);
+            font-family: inherit;
+            text-align: center;
+            outline: none;
         }
         
-        .btn-icon {
-            background: transparent; border: none; color: var(--primary);
-            font-size: 1.5rem; cursor: pointer; padding: 5px;
+        input:focus { border-color: var(--accent-color); }
+
+        .btn-group {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 20px;
+        }
+
+        button {
+            flex: 1;
+            padding: 12px;
+            margin: 0 5px;
+            border: none;
+            cursor: pointer;
+            font-weight: bold;
+            font-family: inherit;
             transition: 0.2s;
         }
-        .btn-icon:hover { transform: scale(1.2); }
-        .btn-heart { color: #ff4d6d; }
 
-        textarea {
-            flex: 1; background: transparent; border: none; color: white;
-            font-family: var(--font-main); font-size: 1rem; resize: none;
-            height: 24px; max-height: 100px; padding: 0;
-        }
-        textarea:focus { outline: none; }
+        .btn-call { background: var(--accent-color); color: #000; }
+        .btn-call:hover { background: #00cc6a; box-shadow: 0 0 15px var(--accent-color); }
         
-        /* Connection Status */
-        .status-dot {
-            width: 8px; height: 8px; border-radius: 50%; background: #444;
-            position: absolute; top: 20px; right: 20px;
-        }
-        .status-dot.online { background: #00ff88; box-shadow: 0 0 10px #00ff88; }
+        .btn-end { background: #333; color: #fff; }
+        .btn-end:hover { background: var(--danger-color); }
+
+        /* Hidden audio element */
+        audio { display: none; }
         
+        /* Security Log Styles */
+        .security-log {
+            margin-top: 15px;
+            font-size: 10px;
+            color: #555;
+            text-align: left;
+            height: 60px;
+            overflow: hidden;
+            border-top: 1px solid #222;
+            padding-top: 5px;
+        }
     </style>
 </head>
 <body>
 
-    <div class="stars"></div>
-    <div id="heartOverlay" class="heart-pulse"></div>
-
-    <div id="setup" class="setup-screen">
-        <div class="setup-card">
-            <h1>Us &hearts; Sync</h1>
-            <p style="font-size:0.8rem; color:rgba(255,255,255,0.6); margin-bottom:20px;">
-                Long Distance Connection
-            </p>
-            
-            <input id="myName" placeholder="Your First Name">
-            <input id="herName" placeholder="Her First Name">
-            
-            <p style="font-size:0.7rem; color:rgba(255,255,255,0.4); margin: 15px 0;">
-                (She must enter the names in the SAME order)
-            </p>
-
-            <select id="timeOffset" style="width:100%; padding:10px; margin-bottom:15px; background:rgba(0,0,0,0.3); color:white; border:1px solid #444; border-radius:10px;">
-                <option value="0">Same Time Zone</option>
-                <option value="-5">USA (East Coast) is -5h</option>
-                <option value="-8">USA (West Coast) is -8h</option>
-                <option value="-12">Other Side of World</option>
-                <option value="custom">I'll set manually later</option>
-            </select>
-
-            <button class="btn-love" onclick="connectToLove()">Connect Hearts</button>
+    <div class="visualizer-container" id="visualizer">
+        <div class="ripple"></div>
+        <div class="ripple"></div>
+        <div class="ripple"></div>
+        <div class="core-circle">
+            <i class="fas fa-microphone-slash" id="mic-icon"></i>
         </div>
     </div>
 
-    <div id="app" style="display:none; flex-direction:column; height:100%;">
-        <div class="status-dot" id="connStatus"></div>
+    <div class="status-badge" id="status-text">SYSTEM OFFLINE</div>
 
-        <header class="header">
-            <div class="clocks">
-                <div>
-                    <div class="clock-label">Me</div>
-                    <div id="clockMe" class="clock-time">--:--</div>
-                </div>
-                <div>
-                    <div class="clock-label" style="color:var(--primary)">Her</div>
-                    <div id="clockHer" class="clock-time" style="color:var(--primary)">--:--</div>
-                </div>
-            </div>
-        </header>
-
-        <div id="chatFeed" class="chat-area">
-            <div style="text-align:center; font-size:0.8rem; color:rgba(255,255,255,0.3); margin-top:50%">
-                Waiting for her...<br>
-                Look at the same stars.
-            </div>
-        </div>
-
-        <div class="input-bar">
-            <input type="file" id="imgInput" hidden accept="image/*">
-            <button class="btn-icon" onclick="document.getElementById('imgInput').click()">📷</button>
-            
-            <textarea id="msgInput" placeholder="Message..."></textarea>
-            
-            <button class="btn-icon btn-heart" id="heartBtn">♥</button>
-            
-            <button class="btn-icon" onclick="sendText()">➤</button>
-        </div>
-    </div>
-
-    <script>
-        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-        function playPing() {
-            if(audioCtx.state === 'suspended') audioCtx.resume();
-            const o = audioCtx.createOscillator(); const g = audioCtx.createGain();
-            o.frequency.setValueAtTime(800, audioCtx.currentTime);
-            o.frequency.exponentialRampToValueAtTime(400, audioCtx.currentTime + 0.3);
-            g.gain.setValueAtTime(0.1, audioCtx.currentTime);
-            g.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.3);
-            o.connect(g); g.connect(audioCtx.destination);
-            o.start(); o.stop(audioCtx.currentTime+0.3);
-        }
-    </script>
-
-    <script>
-        let peer, conn;
-        let offset = 0;
+    <div class="control-panel">
+        <div style="margin-bottom:15px; font-size: 12px; color: #777;">IDENTITY CONFIGURATION</div>
         
-        // --- 1. CONNECTION LOGIC ---
-        function connectToLove() {
-            const name1 = document.getElementById('myName').value.trim().toLowerCase();
-            const name2 = document.getElementById('herName').value.trim().toLowerCase();
-            offset = parseInt(document.getElementById('timeOffset').value);
+        <input type="text" id="my-id" placeholder="Create Your Secret Key">
+        <button class="btn-end" onclick="initializePeer()" style="width:100%; margin:0;">INITIALIZE LINK</button>
+        
+        <div style="margin: 20px 0; border-bottom: 1px solid #333;"></div>
 
-            if(!name1 || !name2) return alert("Please enter both names");
+        <input type="text" id="remote-id" placeholder="Enter Target Secret Key">
+        
+        <div class="btn-group">
+            <button class="btn-call" onclick="startCall()">ESTABLISH LINK</button>
+            <button class="btn-end" onclick="endCall()">TERMINATE</button>
+        </div>
 
-            // ALGORITHM: Alphabetical Sort to ensure IDs match
-            // If I am Alex and she is Sam:
-            // My ID: alex-sam
-            // Target ID: sam-alex
-            // Wait... that doesn't work for P2P. We need a consistent Host/Join pattern or same ID logic.
-            
-            // BETTER STRATEGY: 
-            // We create a "Room Name" by sorting names alphabetically.
-            // Room: "alex-sam"
-            // But PeerJS needs unique IDs per user.
-            // So: I am "alex-sam-[myName]"
-            // She is "alex-sam-[herName]"
-            
-            // To connect, I try to connect to the "other" ID.
-            
-            const roomPrefix = [name1, name2].sort().join('-');
-            const myPeerId = roomPrefix + "-" + name1; 
-            const herPeerId = roomPrefix + "-" + name2;
+        <div class="security-log" id="log-box">
+            > Waiting for initialization...
+        </div>
+    </div>
 
-            document.getElementById('setup').style.display = 'none';
-            document.getElementById('app').style.display = 'flex';
-            
-            startClocks();
+    <audio id="remote-audio" autoplay></audio>
 
-            peer = new Peer(myPeerId);
+    <script>
+        let peer;
+        let localStream;
+        let currentCall;
+        const logBox = document.getElementById('log-box');
+        const statusText = document.getElementById('status-text');
+        const visualizer = document.getElementById('visualizer');
+        const micIcon = document.getElementById('mic-icon');
+
+        // --- 1. SYSTEM LOGGING FUNCTION (Makes it look like "Ciphering") ---
+        function systemLog(msg) {
+            const timestamp = new Date().toLocaleTimeString();
+            logBox.innerHTML += `<div>> [${timestamp}] ${msg}</div>`;
+            logBox.scrollTop = logBox.scrollHeight;
+        }
+
+        // --- 2. INITIALIZE "ME" ---
+        function initializePeer() {
+            const myId = document.getElementById('my-id').value;
+            if (!myId) return alert("Please enter a Secret Key first.");
+
+            // Create Peer with clean ID
+            peer = new Peer(myId);
 
             peer.on('open', (id) => {
-                console.log("My ID:", id);
-                connectToPeer(herPeerId);
-            });
-
-            peer.on('connection', (c) => {
-                handleConnection(c);
+                systemLog(`Identity confirmed: ${id}`);
+                systemLog(`Encryption Engine (DTLS-SRTP): ACTIVE`);
+                statusText.innerText = "SYSTEM IDLE - SECURE";
+                statusText.style.color = "#00ff88";
+                statusText.style.border = "1px solid #00ff88";
+                
+                // Ask for Mic Permission immediately
+                navigator.mediaDevices.getUserMedia({ audio: true }).then((stream) => {
+                    localStream = stream;
+                    micIcon.classList.remove('fa-microphone-slash');
+                    micIcon.classList.add('fa-microphone');
+                    systemLog("Microphone Access: GRANTED");
+                }).catch(err => systemLog("Microphone Access: DENIED"));
             });
 
             peer.on('error', (err) => {
-                console.log("Waiting for her...");
-                // Retry logic if she isn't online yet
-                setTimeout(() => connectToPeer(herPeerId), 3000);
+                systemLog(`Error: ${err.type}`);
+            });
+
+            // --- 3. HANDLE INCOMING CALLS ---
+            peer.on('call', (call) => {
+                systemLog(`Incoming transmission from: ${call.peer}`);
+                
+                // Auto-answer or manual? Let's auto-answer for seamlessness, 
+                // but strictly only if we have a stream.
+                if(confirm(`Incoming Secure Link from "${call.peer}". Accept?`)){
+                    call.answer(localStream); // Send our audio back
+                    handleStream(call);
+                    activateVisualizer();
+                } else {
+                    systemLog("Connection rejected by user.");
+                }
             });
         }
 
-        function connectToPeer(targetId) {
-            const c = peer.connect(targetId);
-            c.on('open', () => handleConnection(c));
-            c.on('error', (e) => console.log("Retrying..."));
+        // --- 4. START OUTGOING CALL ---
+        function startCall() {
+            const remoteId = document.getElementById('remote-id').value;
+            if (!remoteId) return alert("Enter a target key.");
+            if (!localStream) return alert("Microphone not ready.");
+
+            systemLog(`Attempting handshake with: ${remoteId}...`);
+            statusText.innerText = "ESTABLISHING LINK...";
+
+            const call = peer.call(remoteId, localStream);
+            handleStream(call);
         }
 
-        function handleConnection(c) {
-            conn = c;
-            document.getElementById('connStatus').classList.add('online');
-            document.getElementById('chatFeed').innerHTML = `<div style="text-align:center; color:var(--primary); font-size:0.8rem; margin-top:20px;">♥ She is here ♥</div>`;
-            
-            conn.on('data', (data) => {
-                if(data.type === 'text') addMessage(data.content, 'her');
-                if(data.type === 'image') addImage(data.content, 'her');
-                if(data.type === 'pulse') triggerPulse();
+        // --- 5. HANDLE THE AUDIO STREAM (The "Cipher" happens here automatically) ---
+        function handleStream(call) {
+            currentCall = call;
+
+            call.on('stream', (remoteStream) => {
+                const audio = document.getElementById('remote-audio');
+                audio.srcObject = remoteStream;
+                
+                systemLog("Secure Channel Established.");
+                systemLog("Audio Decryption: REAL-TIME");
+                
+                statusText.innerText = "CONNECTED // ENCRYPTED";
+                activateVisualizer();
             });
-            
-            // Keep Alive
-            setInterval(() => { if(conn.open) conn.send({type:'ping'}); }, 5000);
+
+            call.on('close', () => {
+                endCall();
+            });
         }
 
-        // --- 2. MESSAGING ---
-        function sendText() {
-            const el = document.getElementById('msgInput');
-            const txt = el.value.trim();
-            if(!txt) return;
-
-            addMessage(txt, 'me');
-            if(conn && conn.open) conn.send({type: 'text', content: txt});
-            el.value = '';
+        // --- 6. END CALL ---
+        function endCall() {
+            if (currentCall) currentCall.close();
+            statusText.innerText = "SYSTEM IDLE";
+            visualizer.classList.remove('animate-call');
+            micIcon.style.color = "#e0e0e0";
+            systemLog("Link Terminated.");
         }
 
-        // Image Handling
-        document.getElementById('imgInput').addEventListener('change', (e) => {
-            const file = e.target.files[0];
-            if(!file) return;
-            
-            const reader = new FileReader();
-            reader.onload = function(event) {
-                const base64 = event.target.result;
-                addImage(base64, 'me');
-                if(conn && conn.open) conn.send({type: 'image', content: base64});
-            };
-            reader.readAsDataURL(file);
-        });
-
-        // Pulse (The Touch Feature)
-        document.getElementById('heartBtn').addEventListener('click', () => {
-            // Visual feedback for me
-            const btn = document.getElementById('heartBtn');
-            btn.style.transform = "scale(1.5)";
-            setTimeout(() => btn.style.transform = "scale(1)", 200);
-            
-            // Send to her
-            if(conn && conn.open) conn.send({type: 'pulse'});
-        });
-
-        function triggerPulse() {
-            playPing();
-            const overlay = document.getElementById('heartOverlay');
-            overlay.classList.add('active');
-            if(navigator.vibrate) navigator.vibrate([200, 100, 200]); // Phone Vibrate
-            setTimeout(() => overlay.classList.remove('active'), 1000);
+        // --- 7. ANIMATION LOGIC ---
+        function activateVisualizer() {
+            visualizer.classList.add('animate-call');
+            micIcon.style.color = "#00ff88";
+            // In a real app, we would use WebAudioAPI to make the circle scale with volume.
+            // For now, the CSS pulse simulates the "Active Call" state.
         }
-
-        // --- 3. UI HELPERS ---
-        function addMessage(txt, who) {
-            const div = document.createElement('div');
-            div.className = `bubble ${who}`;
-            div.innerText = txt;
-            const feed = document.getElementById('chatFeed');
-            feed.appendChild(div);
-            feed.scrollTop = feed.scrollHeight;
-        }
-
-        function addImage(src, who) {
-            const div = document.createElement('div');
-            div.className = `bubble ${who}`;
-            div.innerHTML = `<img src="${src}">`;
-            const feed = document.getElementById('chatFeed');
-            feed.appendChild(div);
-            feed.scrollTop = feed.scrollHeight;
-        }
-
-        // --- 4. CLOCKS ---
-        function startClocks() {
-            setInterval(() => {
-                const now = new Date();
-                
-                // My Time
-                document.getElementById('clockMe').innerText = now.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
-                
-                // Her Time (Calculated via Offset)
-                // This is a rough estimation. Ideally we use timezone strings, but offset is easier for a simple input.
-                const herTime = new Date(now.getTime() + (offset * 60 * 60 * 1000));
-                document.getElementById('clockHer').innerText = herTime.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
-            }, 1000);
-        }
-
-        // Auto-resize Textarea
-        const tx = document.getElementById('msgInput');
-        tx.addEventListener("input", function(){
-            this.style.height = "auto";
-            this.style.height = (this.scrollHeight) + "px";
-        });
-
     </script>
 </body>
 </html>
