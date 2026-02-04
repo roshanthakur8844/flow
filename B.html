@@ -3,428 +3,369 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>NEURAL PHONE // SYSTEM</title>
+    <title>PROJECT GLASS // NEURAL LINK</title>
     <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Rajdhani:wght@300;500;700&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Share+Tech+Mono&display=swap');
 
         :root {
-            --core-idle: #00d2ff;
-            --core-ring: #ff0055;
-            --core-active: #00ff9d;
-            --bg: #030305;
+            --glass-bg: rgba(255, 255, 255, 0.05);
+            --glass-border: rgba(255, 255, 255, 0.1);
+            --neon-blue: #00f3ff;
+            --neon-purple: #bc13fe;
+            --neon-red: #ff0055;
+            --text-main: #e0faff;
         }
 
         body {
-            background: var(--bg);
-            color: white;
-            font-family: 'Rajdhani', sans-serif;
             margin: 0;
+            background: #050505;
+            color: var(--text-main);
+            font-family: 'Share Tech Mono', monospace;
             height: 100vh;
             overflow: hidden;
             display: flex;
-            flex-direction: column;
             align-items: center;
             justify-content: center;
+            /* Animated Background */
+            background-image: 
+                radial-gradient(circle at 50% 50%, #1a1a2e 0%, #000 100%);
         }
 
-        /* --- THE NEURAL SPHERE (CSS ONLY 3D EFFECT) --- */
-        .scene {
+        /* --- THE HOLOGRAPHIC CONTAINER --- */
+        .glass-panel {
+            width: 90%;
+            max-width: 400px;
+            height: 85vh;
+            background: var(--glass-bg);
+            backdrop-filter: blur(15px);
+            -webkit-backdrop-filter: blur(15px);
+            border: 1px solid var(--glass-border);
+            border-radius: 20px;
+            box-shadow: 0 0 40px rgba(0, 243, 255, 0.1);
             position: relative;
-            width: 300px;
-            height: 300px;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            perspective: 800px;
-            z-index: 2;
-        }
-
-        .sphere {
-            position: absolute;
-            width: 150px;
-            height: 150px;
-            border-radius: 50%;
-            background: radial-gradient(circle at 30% 30%, rgba(255,255,255,0.1), transparent);
-            box-shadow: 
-                0 0 60px var(--core-idle), 
-                inset 0 0 20px rgba(255,255,255,0.5);
-            transition: 0.5s cubic-bezier(0.4, 0, 0.2, 1);
-            animation: breathe 4s infinite ease-in-out;
-            border: 2px solid rgba(255,255,255,0.1);
-            backdrop-filter: blur(5px);
-        }
-
-        /* Rings around the sphere */
-        .ring {
-            position: absolute;
-            border-radius: 50%;
-            border: 1px solid rgba(255,255,255,0.3);
-            transform: rotateX(60deg);
-            animation: spin 10s infinite linear;
-            box-shadow: 0 0 10px var(--core-idle);
-        }
-        .ring:nth-child(1) { width: 200px; height: 200px; border-color: var(--core-idle); animation-duration: 8s; }
-        .ring:nth-child(2) { width: 240px; height: 240px; border-color: rgba(255,255,255,0.1); animation-duration: 12s; animation-direction: reverse;}
-        .ring:nth-child(3) { width: 180px; height: 180px; border-color: rgba(255,255,255,0.1); transform: rotateY(60deg); animation-duration: 6s; }
-
-        /* --- STATES --- */
-        /* 1. RINGING (Incoming) */
-        .scene.ringing .sphere {
-            box-shadow: 0 0 100px var(--core-ring), inset 0 0 40px var(--core-ring);
-            background: rgba(255, 0, 85, 0.1);
-            animation: glitch-shake 0.2s infinite;
-        }
-        .scene.ringing .ring { border-color: var(--core-ring); box-shadow: 0 0 20px var(--core-ring); animation-duration: 0.5s; }
-
-        /* 2. ACTIVE (Talking) */
-        .scene.active .sphere {
-            box-shadow: 0 0 80px var(--core-active);
-            border-color: var(--core-active);
-            /* Scale is handled by JS volume meter */
-        }
-        .scene.active .ring { border-color: var(--core-active); }
-
-
-        /* --- UI OVERLAYS --- */
-        .hud-top {
-            position: absolute;
-            top: 40px;
-            text-align: center;
-            z-index: 10;
-        }
-
-        .phone-number {
-            font-size: 3rem;
-            font-weight: 700;
-            letter-spacing: 5px;
-            text-shadow: 0 0 20px var(--core-idle);
-        }
-
-        .label { font-size: 0.8rem; letter-spacing: 2px; opacity: 0.7; text-transform: uppercase; }
-
-        .hud-bottom {
-            position: absolute;
-            bottom: 50px;
-            width: 100%;
             display: flex;
             flex-direction: column;
-            align-items: center;
-            z-index: 10;
+            padding: 20px;
+            overflow: hidden;
         }
 
-        /* DIALER INPUT */
-        .dialer-box {
-            background: rgba(255,255,255,0.05);
-            border: 1px solid rgba(255,255,255,0.1);
-            padding: 10px 20px;
-            border-radius: 50px;
+        /* --- HUD ELEMENTS --- */
+        .header {
             display: flex;
+            justify-content: space-between;
             align-items: center;
-            backdrop-filter: blur(10px);
+            border-bottom: 1px solid var(--glass-border);
+            padding-bottom: 15px;
             margin-bottom: 20px;
-            transition: 0.3s;
         }
-        .dialer-box:focus-within { border-color: var(--core-idle); box-shadow: 0 0 20px rgba(0, 210, 255, 0.2); }
 
-        input {
-            background: transparent;
-            border: none;
-            color: white;
-            font-size: 1.5rem;
-            width: 150px;
-            font-family: inherit;
-            text-align: center;
-            outline: none;
+        .identity-box h1 {
+            font-family: 'Orbitron', sans-serif;
+            margin: 0;
+            font-size: 2rem;
+            text-shadow: 0 0 10px var(--neon-blue);
             letter-spacing: 2px;
         }
-
-        /* BUTTONS */
-        .btn-grid { display: flex; gap: 20px; }
         
-        .action-btn {
-            width: 60px;
-            height: 60px;
+        .status-light {
+            width: 10px;
+            height: 10px;
+            background: #333;
             border-radius: 50%;
-            border: none;
-            font-size: 1.2rem;
-            cursor: pointer;
-            transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            box-shadow: 0 0 5px #333;
+        }
+        .status-light.online { background: var(--neon-blue); box-shadow: 0 0 10px var(--neon-blue); }
+        .status-light.busy { background: var(--neon-red); box-shadow: 0 0 10px var(--neon-red); }
+
+        /* --- 3D TESSERACT ANIMATION (CSS ONLY) --- */
+        .core-container {
+            flex-grow: 1;
             display: flex;
-            align-items: center;
             justify-content: center;
-            color: #000;
+            align-items: center;
+            perspective: 600px;
         }
 
-        .btn-call { background: var(--core-active); box-shadow: 0 0 20px var(--core-active); }
-        .btn-hangup { background: var(--core-ring); box-shadow: 0 0 20px var(--core-ring); color: white; display: none; }
-        .btn-answer { background: var(--core-active); animation: pulse-green 1s infinite; display: none; }
-
-        .action-btn:active { transform: scale(0.9); }
-        
-        /* ANIMATIONS */
-        @keyframes breathe { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.05); } }
-        @keyframes spin { from { transform: rotateX(60deg) rotateZ(0deg); } to { transform: rotateX(60deg) rotateZ(360deg); } }
-        @keyframes glitch-shake {
-            0% { transform: translate(0,0); }
-            25% { transform: translate(-2px, 2px); }
-            50% { transform: translate(2px, -2px); }
-            75% { transform: translate(-2px, -2px); }
-            100% { transform: translate(2px, 2px); }
+        .cube {
+            width: 100px;
+            height: 100px;
+            position: relative;
+            transform-style: preserve-3d;
+            animation: spin 8s infinite linear;
         }
-        @keyframes pulse-green { 0% { box-shadow: 0 0 0 0 rgba(0, 255, 157, 0.7); } 70% { box-shadow: 0 0 0 20px rgba(0, 255, 157, 0); } 100% { box-shadow: 0 0 0 0 rgba(0, 255, 157, 0); } }
 
-        /* Background Grid */
-        .grid-bg {
+        .face {
             position: absolute;
-            top: 0; left: 0; width: 100%; height: 100%;
-            background-image: linear-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px),
-            linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
-            background-size: 50px 50px;
-            z-index: 1;
-            mask-image: radial-gradient(circle, black 40%, transparent 100%);
+            width: 100px;
+            height: 100px;
+            background: rgba(0, 243, 255, 0.1);
+            border: 2px solid var(--neon-blue);
+            box-shadow: 0 0 15px rgba(0, 243, 255, 0.2);
         }
+
+        .face:nth-child(1) { transform: rotateY(0deg) translateZ(50px); }
+        .face:nth-child(2) { transform: rotateY(90deg) translateZ(50px); }
+        .face:nth-child(3) { transform: rotateY(180deg) translateZ(50px); }
+        .face:nth-child(4) { transform: rotateY(-90deg) translateZ(50px); }
+        .face:nth-child(5) { transform: rotateX(90deg) translateZ(50px); }
+        .face:nth-child(6) { transform: rotateX(-90deg) translateZ(50px); }
+
+        /* Incoming Call Effect */
+        .glass-panel.incoming .cube { animation: spin 0.5s infinite linear; }
+        .glass-panel.incoming .face { border-color: var(--neon-red); background: rgba(255, 0, 85, 0.2); }
+
+        @keyframes spin { 100% { transform: rotateX(360deg) rotateY(360deg); } }
+
+        /* --- CONTROLS --- */
+        .controls {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+
+        input {
+            background: rgba(0,0,0,0.3);
+            border: 1px solid var(--glass-border);
+            color: white;
+            padding: 15px;
+            border-radius: 10px;
+            font-family: inherit;
+            text-align: center;
+            font-size: 1.2rem;
+            outline: none;
+        }
+        input:focus { border-color: var(--neon-blue); }
+
+        .btn-row { display: flex; gap: 10px; }
+        
+        button {
+            flex: 1;
+            padding: 15px;
+            border: none;
+            border-radius: 10px;
+            font-family: 'Orbitron';
+            font-weight: bold;
+            cursor: pointer;
+            transition: 0.3s;
+            text-transform: uppercase;
+        }
+
+        .btn-call { background: linear-gradient(45deg, var(--neon-blue), #00aaff); color: #000; }
+        .btn-end { background: linear-gradient(45deg, var(--neon-red), #ff5500); color: white; }
+        
+        /* --- TRANSCRIPT NOTES --- */
+        .notes-section {
+            height: 150px;
+            background: rgba(0,0,0,0.5);
+            border-top: 2px solid var(--neon-purple);
+            border-radius: 10px;
+            padding: 10px;
+            overflow-y: auto;
+            font-size: 0.8rem;
+            color: #ccc;
+            display: flex;
+            flex-direction: column-reverse; /* Newest msg at bottom */
+        }
+        
+        .note-entry { margin-bottom: 5px; border-bottom: 1px solid #222; padding-bottom: 2px; }
+        .note-entry span { color: var(--neon-purple); font-weight: bold; }
+
+        /* Overlay text */
+        .overlay-status {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 1.5rem;
+            text-align: center;
+            text-shadow: 0 0 20px black;
+            pointer-events: none;
+            display: none;
+        }
+
     </style>
 </head>
 <body>
 
-    <div class="grid-bg"></div>
-
-    <div class="hud-top">
-        <div class="label">YOUR DIGITAL NUMBER</div>
-        <div class="phone-number" id="my-number">...</div>
-        <div class="label" id="status-line">INITIALIZING LINK...</div>
-    </div>
-
-    <div class="scene" id="scene">
-        <div class="ring"></div>
-        <div class="ring"></div>
-        <div class="ring"></div>
-        <div class="sphere" id="core-sphere"></div>
-    </div>
-
-    <div class="hud-bottom">
+    <div class="glass-panel" id="main-panel">
         
-        <div class="dialer-box" id="dialer-ui">
-            <i class="fas fa-hashtag" style="opacity: 0.5;"></i>
-            <input type="text" id="target-number" placeholder="ENTER NUMBER" maxlength="6">
+        <div class="header">
+            <div class="identity-box">
+                <div style="font-size: 0.7rem; color: #888;">SECURE ID</div>
+                <h1 id="my-id">...</h1>
+            </div>
+            <div class="status-light" id="status-light"></div>
         </div>
 
-        <div class="btn-grid">
-            <button class="action-btn btn-call" id="btn-call" onclick="initiateCall()">
-                <i class="fas fa-phone"></i>
-            </button>
-            
-            <button class="action-btn btn-answer" id="btn-answer" onclick="answerCall()">
-                <i class="fas fa-phone"></i>
-            </button>
-
-            <button class="action-btn btn-hangup" id="btn-hangup" onclick="endCall()">
-                <i class="fas fa-phone-slash"></i>
-            </button>
+        <div class="core-container">
+            <div class="cube">
+                <div class="face"></div><div class="face"></div><div class="face"></div>
+                <div class="face"></div><div class="face"></div><div class="face"></div>
+            </div>
+            <div class="overlay-status" id="overlay-text">INCOMING CALL</div>
         </div>
-        
-        <div style="margin-top: 15px; font-size: 0.7rem; color: #555;">SECURE P2P CONNECTION • v4.0</div>
+
+        <div class="controls" id="control-deck">
+            <input type="text" id="target-id" placeholder="ENTER TARGET ID" maxlength="6">
+            <button class="btn-call" onclick="startCall()" id="btn-call">INITIATE LINK</button>
+        </div>
+
+        <div class="controls" id="incall-deck" style="display:none;">
+            <div class="btn-row">
+                <button class="btn-call" id="btn-answer" style="display:none;" onclick="answerCall()">ACCEPT</button>
+                <button class="btn-end" onclick="endCall()">TERMINATE</button>
+            </div>
+        </div>
+
+        <div style="font-size: 0.7rem; margin-top:10px; color: var(--neon-purple);">AUTO-TRANSCRIPTION LOG</div>
+        <div class="notes-section" id="notes-log">
+            <div class="note-entry"><i>System: Speech recognition ready...</i></div>
+        </div>
+
     </div>
 
     <audio id="remote-audio" autoplay></audio>
+
     <script>
-        // --- 1. SYSTEM CORE LOGIC ---
-        let myNumber = localStorage.getItem('neural_phone_number');
+        // --- 1. CONFIGURATION & PERSISTENCE ---
+        let myId = localStorage.getItem('glass_id');
+        if (!myId) {
+            myId = Math.floor(Math.random() * 900000 + 100000).toString();
+            localStorage.setItem('glass_id', myId);
+        }
+        document.getElementById('my-id').innerText = myId;
+
+        // --- 2. PEERJS INIT ---
+        const peer = new Peer(myId);
+        let currentCall;
+        let localStream;
         
-        // If no number exists, generate a random 6-digit one
-        if (!myNumber) {
-            myNumber = Math.floor(100000 + Math.random() * 900000).toString();
-            localStorage.setItem('neural_phone_number', myNumber);
-        }
+        // UI Elements
+        const mainPanel = document.getElementById('main-panel');
+        const overlayText = document.getElementById('overlay-text');
+        const statusLight = document.getElementById('status-light');
+        const notesLog = document.getElementById('notes-log');
 
-        document.getElementById('my-number').innerText = myNumber;
-
-        // --- 2. PEERJS SETUP ---
-        const peer = new Peer(myNumber); // We use the Number as the ID!
-        let currentCall = null;
-        let localStream = null;
-
-        // UI References
-        const scene = document.getElementById('scene');
-        const statusLine = document.getElementById('status-line');
-        const sphere = document.getElementById('core-sphere');
-        const dialerUI = document.getElementById('dialer-ui');
-        const btnCall = document.getElementById('btn-call');
-        const btnAnswer = document.getElementById('btn-answer');
-        const btnHangup = document.getElementById('btn-hangup');
-
-        // --- 3. WAKE LOCK (Keep Phone "Alive") ---
-        async function enableWakeLock() {
-            try {
-                if ('wakeLock' in navigator) {
-                    await navigator.wakeLock.request('screen');
-                    console.log("Wake Lock Active: Screen will not sleep.");
-                }
-            } catch (err) {
-                console.log("Wake Lock Error:", err);
-            }
-        }
-        // Activate on click (browser requires interaction)
-        document.body.onclick = () => { enableWakeLock(); };
-
-        // --- 4. CONNECTION EVENTS ---
         peer.on('open', (id) => {
-            statusLine.innerText = "NETWORK ONLINE • STANDBY";
-            statusLine.style.color = "#00d2ff";
+            statusLight.classList.add('online');
+            addNote("System", "Network Online. Waiting for uplink.");
+            
+            // Keep screen awake (Wake Lock)
+            if ('wakeLock' in navigator) navigator.wakeLock.request('screen').catch(e => console.log(e));
         });
 
-        peer.on('error', (err) => {
-            statusLine.innerText = "CONNECTION ERROR";
-            statusLine.style.color = "red";
-        });
+        // --- 3. SPEECH RECOGNITION (TRANSCRIPTION) ---
+        // This is the "Notes" feature logic
+        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+        let recognition;
 
-        // --- 5. INCOMING CALL LOGIC ---
-        peer.on('call', (call) => {
-            // Ringing State
-            currentCall = call;
-            scene.classList.add('ringing');
-            statusLine.innerText = "INCOMING SIGNAL DETECTED...";
-            statusLine.style.color = "#ff0055";
-            
-            // Switch Buttons
-            dialerUI.style.display = 'none';
-            btnCall.style.display = 'none';
-            btnAnswer.style.display = 'flex';
-            
-            // Play Digital Ringtone
-            startRingtone();
-            
-            // Haptic Feedback (Vibrate phone)
-            if (navigator.vibrate) navigator.vibrate([200, 100, 200, 100, 200]);
-        });
+        if (SpeechRecognition) {
+            recognition = new SpeechRecognition();
+            recognition.continuous = true;
+            recognition.lang = 'en-US';
+            recognition.interimResults = false;
 
-        // --- 6. ANSWER CALL ---
-        function answerCall() {
-            stopRingtone();
-            navigator.mediaDevices.getUserMedia({ audio: true }).then((stream) => {
-                localStream = stream;
-                currentCall.answer(stream); // Send our audio
-                setupActiveCallUI();
-                
-                currentCall.on('stream', (remoteStream) => {
-                    handleRemoteStream(remoteStream);
-                });
-            });
+            recognition.onresult = (event) => {
+                const transcript = event.results[event.results.length - 1][0].transcript;
+                addNote("You", transcript); // Note: It only hears YOU in browser security model
+            };
+        } else {
+            addNote("System", "Speech API not supported in this browser.");
         }
 
-        // --- 7. MAKE CALL ---
-        function initiateCall() {
-            const target = document.getElementById('target-number').value;
-            if (!target || target.length !== 6) return alert("Invalid Number");
+        function addNote(user, text) {
+            const div = document.createElement('div');
+            div.className = 'note-entry';
+            div.innerHTML = `<span>${user}:</span> ${text}`;
+            notesLog.prepend(div);
+        }
 
-            statusLine.innerText = "DIALING " + target + "...";
+        // --- 4. CALLING LOGIC ---
+        
+        // Incoming
+        peer.on('call', (call) => {
+            currentCall = call;
+            mainPanel.classList.add('incoming');
+            overlayText.style.display = 'block';
             
-            navigator.mediaDevices.getUserMedia({ audio: true }).then((stream) => {
+            document.getElementById('control-deck').style.display = 'none';
+            document.getElementById('incall-deck').style.display = 'block';
+            document.getElementById('btn-answer').style.display = 'block';
+            
+            addNote("System", "Incoming connection detected...");
+            navigator.vibrate([500, 200, 500]); // Vibrate phone
+        });
+
+        // Outgoing
+        function startCall() {
+            const target = document.getElementById('target-id').value;
+            if(!target) return;
+
+            navigator.mediaDevices.getUserMedia({ audio: true }).then(stream => {
                 localStream = stream;
                 currentCall = peer.call(target, stream);
+                setupConnectedState();
                 
-                setupActiveCallUI(); // Show hangup button
-                
-                currentCall.on('stream', (remoteStream) => {
-                    handleRemoteStream(remoteStream);
+                currentCall.on('stream', remoteStream => {
+                    document.getElementById('remote-audio').srcObject = remoteStream;
                 });
-
-                currentCall.on('close', endCall);
             });
         }
 
-        // --- 8. ACTIVE CALL UI & AUDIO VISUALIZER ---
-        function setupActiveCallUI() {
-            scene.classList.remove('ringing');
-            scene.classList.add('active');
-            statusLine.innerText = "LINK ESTABLISHED • ENCRYPTED";
-            statusLine.style.color = "#00ff9d";
-            
-            dialerUI.style.display = 'none';
-            btnCall.style.display = 'none';
-            btnAnswer.style.display = 'none';
-            btnHangup.style.display = 'flex';
-        }
-
-        function handleRemoteStream(remoteStream) {
-            const audio = document.getElementById('remote-audio');
-            audio.srcObject = remoteStream;
-
-            // Audio Visualizer Logic (Moves the Sphere)
-            const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-            const src = audioCtx.createMediaStreamSource(remoteStream);
-            const analyser = audioCtx.createAnalyser();
-            src.connect(analyser);
-            analyser.fftSize = 256;
-            const bufferLength = analyser.frequencyBinCount;
-            const dataArray = new Uint8Array(bufferLength);
-
-            function renderFrame() {
-                if (!currentCall) return;
-                requestAnimationFrame(renderFrame);
-                analyser.getByteFrequencyData(dataArray);
+        // Answer
+        function answerCall() {
+            navigator.mediaDevices.getUserMedia({ audio: true }).then(stream => {
+                localStream = stream;
+                currentCall.answer(stream);
+                setupConnectedState();
                 
-                // Calculate volume average
-                let sum = 0;
-                for(let i = 0; i < bufferLength; i++) { sum += dataArray[i]; }
-                let average = sum / bufferLength;
-
-                // Scale sphere based on volume
-                let scale = 1 + (average / 100); 
-                sphere.style.transform = `scale(${scale})`;
-            }
-            renderFrame();
+                currentCall.on('stream', remoteStream => {
+                    document.getElementById('remote-audio').srcObject = remoteStream;
+                });
+            });
         }
 
-        // --- 9. END CALL ---
-        function endCall() {
-            if (currentCall) currentCall.close();
-            if (localStream) localStream.getTracks().forEach(track => track.stop());
+        function setupConnectedState() {
+            mainPanel.classList.remove('incoming');
+            overlayText.innerText = "LINK ESTABLISHED";
+            overlayText.style.color = "var(--neon-blue)";
+            overlayText.style.display = 'block';
+            statusLight.classList.add('busy');
             
-            currentCall = null;
-            scene.classList.remove('active');
-            scene.classList.remove('ringing');
+            document.getElementById('control-deck').style.display = 'none';
+            document.getElementById('incall-deck').style.display = 'block';
+            document.getElementById('btn-answer').style.display = 'none';
+
+            // Start Transcription
+            if(recognition) recognition.start();
+            addNote("System", "Audio Uplink Secured. Recording started.");
+        }
+
+        function endCall() {
+            if(currentCall) currentCall.close();
+            if(localStream) localStream.getTracks().forEach(track => track.stop());
+            if(recognition) recognition.stop();
             
             // Reset UI
-            btnHangup.style.display = 'none';
-            btnAnswer.style.display = 'none';
-            dialerUI.style.display = 'flex';
-            btnCall.style.display = 'flex';
+            mainPanel.classList.remove('incoming');
+            overlayText.style.display = 'none';
+            statusLight.classList.remove('busy');
+            document.getElementById('control-deck').style.display = 'flex';
+            document.getElementById('incall-deck').style.display = 'none';
+            addNote("System", "Call Terminated. Log saved.");
             
-            statusLine.innerText = "NETWORK ONLINE • STANDBY";
-            statusLine.style.color = "#00d2ff";
-            sphere.style.transform = "scale(1)";
+            // Here you could technically save 'notesLog.innerHTML' to localStorage to keep history
+            localStorage.setItem('last_chat_log', notesLog.innerHTML);
         }
 
-        // --- 10. GENERATE RINGTONE (No external files needed) ---
-        let audioCtx, osc, gain;
-        function startRingtone() {
-            audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-            osc = audioCtx.createOscillator();
-            gain = audioCtx.createGain();
-            
-            osc.connect(gain);
-            gain.connect(audioCtx.destination);
-            
-            osc.type = 'square';
-            osc.frequency.setValueAtTime(440, audioCtx.currentTime);
-            osc.frequency.setValueAtTime(554, audioCtx.currentTime + 0.1);
-            
-            // Pulsing effect
-            gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
-            gain.gain.setTargetAtTime(0, audioCtx.currentTime + 0.5, 0.1);
-            
-            osc.start();
-            
-            // Loop the beep
-            osc.onended = () => { if(scene.classList.contains('ringing')) startRingtone(); };
-            osc.stop(audioCtx.currentTime + 0.6);
-        }
-        function stopRingtone() {
-            if (audioCtx) audioCtx.close();
+        // Load previous chat history if available
+        const savedLog = localStorage.getItem('last_chat_log');
+        if(savedLog) {
+            notesLog.innerHTML += "<div class='note-entry' style='text-align:center'>--- PREVIOUS SESSION ---</div>" + savedLog;
         }
 
     </script>
