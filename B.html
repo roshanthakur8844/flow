@@ -3,369 +3,382 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PROJECT GLASS // NEURAL LINK</title>
+    <title>VENOM LINK // LIQUID UI</title>
     <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Syncopate:wght@700&family=Rajdhani:wght@500&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    
-    <style>
-        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Share+Tech+Mono&display=swap');
 
+    <style>
         :root {
-            --glass-bg: rgba(255, 255, 255, 0.05);
-            --glass-border: rgba(255, 255, 255, 0.1);
-            --neon-blue: #00f3ff;
-            --neon-purple: #bc13fe;
-            --neon-red: #ff0055;
-            --text-main: #e0faff;
+            --blob-color: #000000;
+            --accent-color: #00ff88;
+            --bg-color: #444; /* Needs to be lighter for black blob to show */
+            --text-color: #fff;
         }
 
         body {
             margin: 0;
-            background: #050505;
-            color: var(--text-main);
-            font-family: 'Share Tech Mono', monospace;
             height: 100vh;
+            background: #222;
+            font-family: 'Rajdhani', sans-serif;
             overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            color: white;
+        }
+
+        /* --- THE MAGIC TRICK (CSS GOOEY FILTER) --- */
+        .gooey-container {
+            filter: url('#goo');
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1;
+            pointer-events: none; /* Let clicks pass through to buttons */
+        }
+
+        /* The Liquid Blobs */
+        .blob {
+            background: var(--blob-color);
+            border-radius: 50%;
+            position: absolute;
+            transition: all 0.8s cubic-bezier(0.77, 0, 0.175, 1);
+        }
+
+        /* Main Core Blob */
+        .core {
+            width: 150px;
+            height: 150px;
+            z-index: 10;
             display: flex;
             align-items: center;
             justify-content: center;
-            /* Animated Background */
-            background-image: 
-                radial-gradient(circle at 50% 50%, #1a1a2e 0%, #000 100%);
+            color: var(--accent-color);
+            font-size: 1.5rem;
+            pointer-events: auto;
+            cursor: pointer;
+            box-shadow: 0 0 20px rgba(0,0,0,0.5);
         }
 
-        /* --- THE HOLOGRAPHIC CONTAINER --- */
-        .glass-panel {
-            width: 90%;
-            max-width: 400px;
-            height: 85vh;
-            background: var(--glass-bg);
-            backdrop-filter: blur(15px);
-            -webkit-backdrop-filter: blur(15px);
-            border: 1px solid var(--glass-border);
-            border-radius: 20px;
-            box-shadow: 0 0 40px rgba(0, 243, 255, 0.1);
-            position: relative;
+        /* Orbiting Droplets (The Keypad) */
+        .droplet {
+            width: 60px;
+            height: 60px;
+            z-index: 5;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+            pointer-events: auto;
+            cursor: pointer;
+            opacity: 0; /* Hidden initially */
+            transform: translate(0,0); /* Centered initially */
+        }
+        
+        /* Active State: Explode droplets outwards */
+        .gooey-container.expanded .droplet {
+            opacity: 1;
+        }
+        /* Positions for droplets when expanded */
+        .gooey-container.expanded .d1 { transform: translate(0, -120px); }
+        .gooey-container.expanded .d2 { transform: translate(100px, -60px); }
+        .gooey-container.expanded .d3 { transform: translate(100px, 60px); }
+        .gooey-container.expanded .d4 { transform: translate(0, 120px); }
+        .gooey-container.expanded .d5 { transform: translate(-100px, 60px); }
+        .gooey-container.expanded .d6 { transform: translate(-100px, -60px); }
+
+        /* Animation: Heartbeat when calling */
+        @keyframes pulse-liquid {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+            100% { transform: scale(1); }
+        }
+        .core.calling { animation: pulse-liquid 1s infinite ease-in-out; background: #2a2a2a; }
+        .core.ringing { animation: pulse-liquid 0.2s infinite; background: #500; color: white; }
+
+        /* --- UI OVERLAYS (Non-Gooey) --- */
+        .ui-layer {
+            position: absolute;
+            z-index: 20;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
             display: flex;
             flex-direction: column;
+            justify-content: space-between;
             padding: 20px;
+            box-sizing: border-box;
+        }
+
+        .header {
+            text-align: center;
+            font-family: 'Syncopate', sans-serif;
+            text-transform: uppercase;
+            letter-spacing: 5px;
+            margin-top: 20px;
+        }
+
+        .number-display {
+            font-size: 3rem;
+            text-shadow: 0 5px 15px rgba(0,0,0,0.5);
+        }
+
+        /* --- TRANSCRIPT NOTEBOOK --- */
+        .notebook {
+            background: rgba(0, 0, 0, 0.8);
+            border: 1px solid #444;
+            border-radius: 15px;
+            width: 300px;
+            height: 200px;
+            align-self: center;
+            pointer-events: auto;
+            display: flex;
+            flex-direction: column;
+            backdrop-filter: blur(10px);
+            transform: translateY(300px); /* Hidden off screen */
+            transition: 0.5s;
             overflow: hidden;
         }
 
-        /* --- HUD ELEMENTS --- */
-        .header {
+        .notebook.visible { transform: translateY(0); }
+
+        .note-header {
+            background: #111;
+            padding: 10px;
+            font-size: 0.8rem;
             display: flex;
             justify-content: space-between;
             align-items: center;
-            border-bottom: 1px solid var(--glass-border);
-            padding-bottom: 15px;
-            margin-bottom: 20px;
+            border-bottom: 1px solid #333;
         }
 
-        .identity-box h1 {
-            font-family: 'Orbitron', sans-serif;
-            margin: 0;
-            font-size: 2rem;
-            text-shadow: 0 0 10px var(--neon-blue);
-            letter-spacing: 2px;
-        }
-        
-        .status-light {
-            width: 10px;
-            height: 10px;
-            background: #333;
-            border-radius: 50%;
-            box-shadow: 0 0 5px #333;
-        }
-        .status-light.online { background: var(--neon-blue); box-shadow: 0 0 10px var(--neon-blue); }
-        .status-light.busy { background: var(--neon-red); box-shadow: 0 0 10px var(--neon-red); }
-
-        /* --- 3D TESSERACT ANIMATION (CSS ONLY) --- */
-        .core-container {
+        .note-content {
             flex-grow: 1;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            perspective: 600px;
-        }
-
-        .cube {
-            width: 100px;
-            height: 100px;
-            position: relative;
-            transform-style: preserve-3d;
-            animation: spin 8s infinite linear;
-        }
-
-        .face {
-            position: absolute;
-            width: 100px;
-            height: 100px;
-            background: rgba(0, 243, 255, 0.1);
-            border: 2px solid var(--neon-blue);
-            box-shadow: 0 0 15px rgba(0, 243, 255, 0.2);
-        }
-
-        .face:nth-child(1) { transform: rotateY(0deg) translateZ(50px); }
-        .face:nth-child(2) { transform: rotateY(90deg) translateZ(50px); }
-        .face:nth-child(3) { transform: rotateY(180deg) translateZ(50px); }
-        .face:nth-child(4) { transform: rotateY(-90deg) translateZ(50px); }
-        .face:nth-child(5) { transform: rotateX(90deg) translateZ(50px); }
-        .face:nth-child(6) { transform: rotateX(-90deg) translateZ(50px); }
-
-        /* Incoming Call Effect */
-        .glass-panel.incoming .cube { animation: spin 0.5s infinite linear; }
-        .glass-panel.incoming .face { border-color: var(--neon-red); background: rgba(255, 0, 85, 0.2); }
-
-        @keyframes spin { 100% { transform: rotateX(360deg) rotateY(360deg); } }
-
-        /* --- CONTROLS --- */
-        .controls {
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-            margin-bottom: 10px;
-        }
-
-        input {
-            background: rgba(0,0,0,0.3);
-            border: 1px solid var(--glass-border);
-            color: white;
             padding: 15px;
-            border-radius: 10px;
-            font-family: inherit;
-            text-align: center;
-            font-size: 1.2rem;
-            outline: none;
-        }
-        input:focus { border-color: var(--neon-blue); }
-
-        .btn-row { display: flex; gap: 10px; }
-        
-        button {
-            flex: 1;
-            padding: 15px;
-            border: none;
-            border-radius: 10px;
-            font-family: 'Orbitron';
-            font-weight: bold;
-            cursor: pointer;
-            transition: 0.3s;
-            text-transform: uppercase;
-        }
-
-        .btn-call { background: linear-gradient(45deg, var(--neon-blue), #00aaff); color: #000; }
-        .btn-end { background: linear-gradient(45deg, var(--neon-red), #ff5500); color: white; }
-        
-        /* --- TRANSCRIPT NOTES --- */
-        .notes-section {
-            height: 150px;
-            background: rgba(0,0,0,0.5);
-            border-top: 2px solid var(--neon-purple);
-            border-radius: 10px;
-            padding: 10px;
-            overflow-y: auto;
-            font-size: 0.8rem;
+            font-size: 0.9rem;
             color: #ccc;
-            display: flex;
-            flex-direction: column-reverse; /* Newest msg at bottom */
+            overflow-y: auto;
+            font-family: monospace;
         }
-        
-        .note-entry { margin-bottom: 5px; border-bottom: 1px solid #222; padding-bottom: 2px; }
-        .note-entry span { color: var(--neon-purple); font-weight: bold; }
 
-        /* Overlay text */
-        .overlay-status {
+        .download-btn {
+            background: var(--accent-color);
+            color: black;
+            border: none;
+            padding: 5px 10px;
+            cursor: pointer;
+            font-weight: bold;
+            border-radius: 4px;
+        }
+
+        input.stealth-input {
+            background: transparent;
+            border: none;
+            color: transparent;
             position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            font-size: 1.5rem;
-            text-align: center;
-            text-shadow: 0 0 20px black;
-            pointer-events: none;
-            display: none;
+            top: -100px;
         }
 
     </style>
 </head>
 <body>
 
-    <div class="glass-panel" id="main-panel">
-        
+    <div class="ui-layer">
         <div class="header">
-            <div class="identity-box">
-                <div style="font-size: 0.7rem; color: #888;">SECURE ID</div>
-                <h1 id="my-id">...</h1>
+            <div>My Liquid ID</div>
+            <div class="number-display" id="my-id">...</div>
+            <div style="font-size: 0.8rem; opacity: 0.6; margin-top:5px;">TAP CORE TO DIAL</div>
+        </div>
+
+        <div class="notebook" id="notebook">
+            <div class="note-header">
+                <span><i class="fas fa-file-waveform"></i> MISSION LOG</span>
+                <button class="download-btn" onclick="downloadNotes()">SAVE</button>
             </div>
-            <div class="status-light" id="status-light"></div>
-        </div>
-
-        <div class="core-container">
-            <div class="cube">
-                <div class="face"></div><div class="face"></div><div class="face"></div>
-                <div class="face"></div><div class="face"></div><div class="face"></div>
-            </div>
-            <div class="overlay-status" id="overlay-text">INCOMING CALL</div>
-        </div>
-
-        <div class="controls" id="control-deck">
-            <input type="text" id="target-id" placeholder="ENTER TARGET ID" maxlength="6">
-            <button class="btn-call" onclick="startCall()" id="btn-call">INITIATE LINK</button>
-        </div>
-
-        <div class="controls" id="incall-deck" style="display:none;">
-            <div class="btn-row">
-                <button class="btn-call" id="btn-answer" style="display:none;" onclick="answerCall()">ACCEPT</button>
-                <button class="btn-end" onclick="endCall()">TERMINATE</button>
+            <div class="note-content" id="transcription-area">
+                > Listening for audio input...<br>
             </div>
         </div>
+    </div>
 
-        <div style="font-size: 0.7rem; margin-top:10px; color: var(--neon-purple);">AUTO-TRANSCRIPTION LOG</div>
-        <div class="notes-section" id="notes-log">
-            <div class="note-entry"><i>System: Speech recognition ready...</i></div>
+    <div class="gooey-container" id="goo-wrapper">
+        
+        <div class="blob droplet d1" onclick="inputDigit(1)">1</div>
+        <div class="blob droplet d2" onclick="inputDigit(2)">2</div>
+        <div class="blob droplet d3" onclick="inputDigit(3)">3</div>
+        <div class="blob droplet d4" onclick="inputDigit(4)">4</div>
+        <div class="blob droplet d5" onclick="inputDigit(5)">5</div>
+        <div class="blob droplet d6" onclick="inputDigit(6)">6</div>
+
+        <div class="blob core" id="core-btn" onclick="toggleMenu()">
+            <i class="fas fa-fingerprint" id="core-icon"></i>
         </div>
 
     </div>
 
     <audio id="remote-audio" autoplay></audio>
+    <input type="text" id="target-input" class="stealth-input">
+
+    <svg style="position: absolute; width:0; height:0;">
+        <defs>
+            <filter id="goo">
+                <feGaussianBlur in="SourceGraphic" stdDeviation="10" result="blur" />
+                <feColorMatrix in="blur" mode="matrix" values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 19 -9" result="goo" />
+                <feComposite in="SourceGraphic" in2="goo" operator="atop"/>
+            </filter>
+        </defs>
+    </svg>
 
     <script>
-        // --- 1. CONFIGURATION & PERSISTENCE ---
-        let myId = localStorage.getItem('glass_id');
+        // --- 1. SETUP ---
+        // Generate or Retrieve ID
+        let myId = localStorage.getItem('liquid_id');
         if (!myId) {
             myId = Math.floor(Math.random() * 900000 + 100000).toString();
-            localStorage.setItem('glass_id', myId);
+            localStorage.setItem('liquid_id', myId);
         }
         document.getElementById('my-id').innerText = myId;
 
-        // --- 2. PEERJS INIT ---
+        // PeerJS
         const peer = new Peer(myId);
-        let currentCall;
-        let localStream;
-        
-        // UI Elements
-        const mainPanel = document.getElementById('main-panel');
-        const overlayText = document.getElementById('overlay-text');
-        const statusLight = document.getElementById('status-light');
-        const notesLog = document.getElementById('notes-log');
+        let currentCall = null;
+        let isMenuOpen = false;
+        let targetNumber = "";
 
-        peer.on('open', (id) => {
-            statusLight.classList.add('online');
-            addNote("System", "Network Online. Waiting for uplink.");
+        // UI Refs
+        const wrapper = document.getElementById('goo-wrapper');
+        const core = document.getElementById('core-btn');
+        const icon = document.getElementById('core-icon');
+        const notebook = document.getElementById('notebook');
+        const log = document.getElementById('transcription-area');
+        
+        // Wake Lock
+        if ('wakeLock' in navigator) navigator.wakeLock.request('screen').catch(e=>{});
+
+        // --- 2. LIQUID INTERACTION ---
+        function toggleMenu() {
+            if (currentCall) {
+                // If in call, this button ends the call
+                endCall();
+                return;
+            }
+
+            isMenuOpen = !isMenuOpen;
+            if (isMenuOpen) {
+                wrapper.classList.add('expanded');
+                icon.className = "fas fa-times"; // Show Close icon
+                targetNumber = ""; // Reset number
+                log.innerHTML += "> System: Dialing Initiated... Select User ID.<br>";
+            } else {
+                wrapper.classList.remove('expanded');
+                icon.className = "fas fa-fingerprint";
+            }
+        }
+
+        function inputDigit(num) {
+            // Simplified Logic: 
+            // In a real app, you'd type 6 digits. 
+            // For this demo, we'll simulate dialing by entering the target ID in a prompt 
+            // because typing on floating bubbles is complex.
             
-            // Keep screen awake (Wake Lock)
-            if ('wakeLock' in navigator) navigator.wakeLock.request('screen').catch(e => console.log(e));
-        });
-
-        // --- 3. SPEECH RECOGNITION (TRANSCRIPTION) ---
-        // This is the "Notes" feature logic
-        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-        let recognition;
-
-        if (SpeechRecognition) {
-            recognition = new SpeechRecognition();
-            recognition.continuous = true;
-            recognition.lang = 'en-US';
-            recognition.interimResults = false;
-
-            recognition.onresult = (event) => {
-                const transcript = event.results[event.results.length - 1][0].transcript;
-                addNote("You", transcript); // Note: It only hears YOU in browser security model
-            };
-        } else {
-            addNote("System", "Speech API not supported in this browser.");
+            let target = prompt("Enter the 6-digit Target ID to bridge the connection:", "");
+            if (target) {
+                makeCall(target);
+            }
         }
 
-        function addNote(user, text) {
-            const div = document.createElement('div');
-            div.className = 'note-entry';
-            div.innerHTML = `<span>${user}:</span> ${text}`;
-            notesLog.prepend(div);
-        }
-
-        // --- 4. CALLING LOGIC ---
-        
-        // Incoming
+        // --- 3. CALLING LOGIC ---
         peer.on('call', (call) => {
+            // Incoming
             currentCall = call;
-            mainPanel.classList.add('incoming');
-            overlayText.style.display = 'block';
+            core.classList.add('ringing');
+            icon.className = "fas fa-phone-volume";
+            log.innerHTML += `> System: Incoming connection from ${call.peer}<br>`;
             
-            document.getElementById('control-deck').style.display = 'none';
-            document.getElementById('incall-deck').style.display = 'block';
-            document.getElementById('btn-answer').style.display = 'block';
-            
-            addNote("System", "Incoming connection detected...");
-            navigator.vibrate([500, 200, 500]); // Vibrate phone
+            // Auto-Answer on click
+            core.onclick = () => {
+                call.answer(); // Audio defaults to false for privacy, ask user next
+                navigator.mediaDevices.getUserMedia({ audio: true }).then(stream => {
+                    call.answer(stream);
+                    setupCallEvents(call, stream);
+                });
+            };
         });
 
-        // Outgoing
-        function startCall() {
-            const target = document.getElementById('target-id').value;
-            if(!target) return;
-
+        function makeCall(id) {
             navigator.mediaDevices.getUserMedia({ audio: true }).then(stream => {
-                localStream = stream;
-                currentCall = peer.call(target, stream);
-                setupConnectedState();
-                
-                currentCall.on('stream', remoteStream => {
-                    document.getElementById('remote-audio').srcObject = remoteStream;
-                });
+                log.innerHTML += `> System: Connecting to ${id}...<br>`;
+                const call = peer.call(id, stream);
+                setupCallEvents(call, stream);
             });
         }
 
-        // Answer
-        function answerCall() {
-            navigator.mediaDevices.getUserMedia({ audio: true }).then(stream => {
-                localStream = stream;
-                currentCall.answer(stream);
-                setupConnectedState();
-                
-                currentCall.on('stream', remoteStream => {
-                    document.getElementById('remote-audio').srcObject = remoteStream;
-                });
-            });
-        }
-
-        function setupConnectedState() {
-            mainPanel.classList.remove('incoming');
-            overlayText.innerText = "LINK ESTABLISHED";
-            overlayText.style.color = "var(--neon-blue)";
-            overlayText.style.display = 'block';
-            statusLight.classList.add('busy');
+        function setupCallEvents(call, localStream) {
+            currentCall = call;
+            core.classList.remove('ringing');
+            core.classList.add('calling'); // Heartbeat effect
+            wrapper.classList.remove('expanded'); // Close menu
+            icon.className = "fas fa-microphone";
+            notebook.classList.add('visible'); // Show Notes
             
-            document.getElementById('control-deck').style.display = 'none';
-            document.getElementById('incall-deck').style.display = 'block';
-            document.getElementById('btn-answer').style.display = 'none';
+            call.on('stream', remoteStream => {
+                document.getElementById('remote-audio').srcObject = remoteStream;
+                log.innerHTML += "> System: Audio Stream Stabilized.<br>";
+                startTranscription();
+            });
 
-            // Start Transcription
-            if(recognition) recognition.start();
-            addNote("System", "Audio Uplink Secured. Recording started.");
+            call.on('close', () => endCall());
         }
 
         function endCall() {
-            if(currentCall) currentCall.close();
-            if(localStream) localStream.getTracks().forEach(track => track.stop());
-            if(recognition) recognition.stop();
-            
-            // Reset UI
-            mainPanel.classList.remove('incoming');
-            overlayText.style.display = 'none';
-            statusLight.classList.remove('busy');
-            document.getElementById('control-deck').style.display = 'flex';
-            document.getElementById('incall-deck').style.display = 'none';
-            addNote("System", "Call Terminated. Log saved.");
-            
-            // Here you could technically save 'notesLog.innerHTML' to localStorage to keep history
-            localStorage.setItem('last_chat_log', notesLog.innerHTML);
+            if (currentCall) currentCall.close();
+            currentCall = null;
+            core.classList.remove('calling');
+            core.classList.remove('ringing');
+            icon.className = "fas fa-fingerprint";
+            log.innerHTML += "> System: Call Ended.<br>";
+            stopTranscription();
         }
 
-        // Load previous chat history if available
-        const savedLog = localStorage.getItem('last_chat_log');
-        if(savedLog) {
-            notesLog.innerHTML += "<div class='note-entry' style='text-align:center'>--- PREVIOUS SESSION ---</div>" + savedLog;
+        // --- 4. TRANSCRIPTION & NOTES ---
+        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+        let recognition;
+
+        function startTranscription() {
+            if (SpeechRecognition) {
+                recognition = new SpeechRecognition();
+                recognition.continuous = true;
+                recognition.lang = 'en-US';
+                recognition.onresult = (e) => {
+                    const txt = e.results[e.results.length - 1][0].transcript;
+                    const time = new Date().toLocaleTimeString();
+                    log.innerHTML += `<div style="color:var(--accent-color)">[${time}] Me: ${txt}</div>`;
+                    log.scrollTop = log.scrollHeight; // Auto scroll
+                };
+                recognition.start();
+            } else {
+                log.innerHTML += "> Error: Speech API not supported.<br>";
+            }
+        }
+
+        function stopTranscription() {
+            if (recognition) recognition.stop();
+        }
+
+        // --- 5. SAVE NOTES FEATURE ---
+        function downloadNotes() {
+            const textContent = log.innerText;
+            const blob = new Blob([textContent], { type: "text/plain" });
+            const anchor = document.createElement("a");
+            anchor.href = URL.createObjectURL(blob);
+            anchor.download = `Mission_Log_${new Date().toLocaleDateString()}.txt`;
+            anchor.click();
+            alert("Mission Log Saved to Device.");
         }
 
     </script>
