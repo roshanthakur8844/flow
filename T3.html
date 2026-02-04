@@ -3,327 +3,430 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>GHOST LINK // TACTICAL</title>
+    <title>NEURAL PHONE // SYSTEM</title>
     <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
     <style>
+        @import url('https://fonts.googleapis.com/css2?family=Rajdhani:wght@300;500;700&display=swap');
+
         :root {
-            --bg-dark: #050505;
-            --card-bg: #111;
-            --neon-blue: #00f3ff;
-            --neon-green: #00ff88;
-            --neon-red: #ff3333;
-            --text-gray: #888;
+            --core-idle: #00d2ff;
+            --core-ring: #ff0055;
+            --core-active: #00ff9d;
+            --bg: #030305;
         }
 
         body {
-            background-color: var(--bg-dark);
+            background: var(--bg);
             color: white;
-            font-family: 'Courier New', monospace;
+            font-family: 'Rajdhani', sans-serif;
             margin: 0;
             height: 100vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
             overflow: hidden;
-            perspective: 1000px; /* Essential for 3D Flip */
-            background-image: 
-                linear-gradient(rgba(0, 255, 136, 0.03) 1px, transparent 1px),
-                linear-gradient(90deg, rgba(0, 255, 136, 0.03) 1px, transparent 1px);
-            background-size: 40px 40px;
-        }
-
-        /* --- THE STAGE --- */
-        .interface-stage {
-            display: flex;
-            gap: 50px;
-            align-items: center;
-        }
-
-        /* --- THE CARDS --- */
-        .card {
-            width: 300px;
-            height: 400px;
-            background: rgba(17, 17, 17, 0.9);
-            border: 1px solid #333;
-            border-radius: 12px;
-            position: relative;
             display: flex;
             flex-direction: column;
             align-items: center;
-            padding: 20px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.8);
-            
-            /* 3D Flip Setup */
-            transform-style: preserve-3d;
-            transform: rotateY(90deg); /* Start Hidden (Sideways) */
-            opacity: 0;
-            transition: all 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            justify-content: center;
         }
 
-        /* When the class .visible is added, flip to front */
-        .card.visible {
-            transform: rotateY(0deg);
-            opacity: 1;
+        /* --- THE NEURAL SPHERE (CSS ONLY 3D EFFECT) --- */
+        .scene {
+            position: relative;
+            width: 300px;
+            height: 300px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            perspective: 800px;
+            z-index: 2;
         }
 
-        /* Active Connection Pulse */
-        .card.connected {
-            border-color: var(--neon-green);
-            box-shadow: 0 0 30px rgba(0, 255, 136, 0.15);
-            animation: breathe 3s infinite ease-in-out;
-        }
-
-        @keyframes breathe {
-            0% { box-shadow: 0 0 20px rgba(0, 255, 136, 0.1); }
-            50% { box-shadow: 0 0 50px rgba(0, 255, 136, 0.4); }
-            100% { box-shadow: 0 0 20px rgba(0, 255, 136, 0.1); }
-        }
-
-        /* --- CARD INTERNALS --- */
-        .avatar-box {
-            width: 100px;
-            height: 100px;
+        .sphere {
+            position: absolute;
+            width: 150px;
+            height: 150px;
             border-radius: 50%;
-            border: 2px dashed #444;
+            background: radial-gradient(circle at 30% 30%, rgba(255,255,255,0.1), transparent);
+            box-shadow: 
+                0 0 60px var(--core-idle), 
+                inset 0 0 20px rgba(255,255,255,0.5);
+            transition: 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+            animation: breathe 4s infinite ease-in-out;
+            border: 2px solid rgba(255,255,255,0.1);
+            backdrop-filter: blur(5px);
+        }
+
+        /* Rings around the sphere */
+        .ring {
+            position: absolute;
+            border-radius: 50%;
+            border: 1px solid rgba(255,255,255,0.3);
+            transform: rotateX(60deg);
+            animation: spin 10s infinite linear;
+            box-shadow: 0 0 10px var(--core-idle);
+        }
+        .ring:nth-child(1) { width: 200px; height: 200px; border-color: var(--core-idle); animation-duration: 8s; }
+        .ring:nth-child(2) { width: 240px; height: 240px; border-color: rgba(255,255,255,0.1); animation-duration: 12s; animation-direction: reverse;}
+        .ring:nth-child(3) { width: 180px; height: 180px; border-color: rgba(255,255,255,0.1); transform: rotateY(60deg); animation-duration: 6s; }
+
+        /* --- STATES --- */
+        /* 1. RINGING (Incoming) */
+        .scene.ringing .sphere {
+            box-shadow: 0 0 100px var(--core-ring), inset 0 0 40px var(--core-ring);
+            background: rgba(255, 0, 85, 0.1);
+            animation: glitch-shake 0.2s infinite;
+        }
+        .scene.ringing .ring { border-color: var(--core-ring); box-shadow: 0 0 20px var(--core-ring); animation-duration: 0.5s; }
+
+        /* 2. ACTIVE (Talking) */
+        .scene.active .sphere {
+            box-shadow: 0 0 80px var(--core-active);
+            border-color: var(--core-active);
+            /* Scale is handled by JS volume meter */
+        }
+        .scene.active .ring { border-color: var(--core-active); }
+
+
+        /* --- UI OVERLAYS --- */
+        .hud-top {
+            position: absolute;
+            top: 40px;
+            text-align: center;
+            z-index: 10;
+        }
+
+        .phone-number {
+            font-size: 3rem;
+            font-weight: 700;
+            letter-spacing: 5px;
+            text-shadow: 0 0 20px var(--core-idle);
+        }
+
+        .label { font-size: 0.8rem; letter-spacing: 2px; opacity: 0.7; text-transform: uppercase; }
+
+        .hud-bottom {
+            position: absolute;
+            bottom: 50px;
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            z-index: 10;
+        }
+
+        /* DIALER INPUT */
+        .dialer-box {
+            background: rgba(255,255,255,0.05);
+            border: 1px solid rgba(255,255,255,0.1);
+            padding: 10px 20px;
+            border-radius: 50px;
+            display: flex;
+            align-items: center;
+            backdrop-filter: blur(10px);
+            margin-bottom: 20px;
+            transition: 0.3s;
+        }
+        .dialer-box:focus-within { border-color: var(--core-idle); box-shadow: 0 0 20px rgba(0, 210, 255, 0.2); }
+
+        input {
+            background: transparent;
+            border: none;
+            color: white;
+            font-size: 1.5rem;
+            width: 150px;
+            font-family: inherit;
+            text-align: center;
+            outline: none;
+            letter-spacing: 2px;
+        }
+
+        /* BUTTONS */
+        .btn-grid { display: flex; gap: 20px; }
+        
+        .action-btn {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            border: none;
+            font-size: 1.2rem;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 30px;
-            margin-bottom: 20px;
-            color: #444;
-            position: relative;
+            color: #000;
         }
 
-        /* The Spinning Ring around Avatar */
-        .card.connected .avatar-box {
-            border-color: var(--neon-green);
-            color: var(--neon-green);
-        }
+        .btn-call { background: var(--core-active); box-shadow: 0 0 20px var(--core-active); }
+        .btn-hangup { background: var(--core-ring); box-shadow: 0 0 20px var(--core-ring); color: white; display: none; }
+        .btn-answer { background: var(--core-active); animation: pulse-green 1s infinite; display: none; }
+
+        .action-btn:active { transform: scale(0.9); }
         
-        .card.connected .avatar-box::after {
-            content: '';
+        /* ANIMATIONS */
+        @keyframes breathe { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.05); } }
+        @keyframes spin { from { transform: rotateX(60deg) rotateZ(0deg); } to { transform: rotateX(60deg) rotateZ(360deg); } }
+        @keyframes glitch-shake {
+            0% { transform: translate(0,0); }
+            25% { transform: translate(-2px, 2px); }
+            50% { transform: translate(2px, -2px); }
+            75% { transform: translate(-2px, -2px); }
+            100% { transform: translate(2px, 2px); }
+        }
+        @keyframes pulse-green { 0% { box-shadow: 0 0 0 0 rgba(0, 255, 157, 0.7); } 70% { box-shadow: 0 0 0 20px rgba(0, 255, 157, 0); } 100% { box-shadow: 0 0 0 0 rgba(0, 255, 157, 0); } }
+
+        /* Background Grid */
+        .grid-bg {
             position: absolute;
-            top: -10px; left: -10px; right: -10px; bottom: -10px;
-            border-radius: 50%;
-            border: 2px solid transparent;
-            border-top-color: var(--neon-green);
-            animation: spin 2s linear infinite;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background-image: linear-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px),
+            linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
+            background-size: 50px 50px;
+            z-index: 1;
+            mask-image: radial-gradient(circle, black 40%, transparent 100%);
         }
-
-        @keyframes spin { 100% { transform: rotate(360deg); } }
-
-        h2 { font-size: 14px; letter-spacing: 3px; color: var(--text-gray); margin-bottom: 5px; }
-        h1 { font-size: 24px; margin: 0 0 20px 0; text-transform: uppercase; }
-
-        input {
-            background: #000;
-            border: 1px solid #333;
-            color: var(--neon-blue);
-            padding: 10px;
-            text-align: center;
-            font-family: inherit;
-            width: 80%;
-            margin-bottom: 15px;
-            outline: none;
-            transition: 0.3s;
-        }
-        input:focus { border-color: var(--neon-blue); box-shadow: 0 0 10px rgba(0, 243, 255, 0.2); }
-
-        /* --- BUTTONS --- */
-        .btn {
-            width: 100%;
-            padding: 12px;
-            border: none;
-            cursor: pointer;
-            font-weight: bold;
-            font-family: inherit;
-            margin-top: auto; /* Push to bottom */
-            letter-spacing: 2px;
-            transition: 0.3s;
-        }
-
-        .btn-init { background: var(--neon-blue); color: #000; }
-        .btn-init:hover { box-shadow: 0 0 20px var(--neon-blue); }
-
-        .btn-call { background: var(--neon-green); color: #000; }
-        .btn-call:hover { box-shadow: 0 0 20px var(--neon-green); }
-
-        .btn-end { background: var(--neon-red); color: #000; display: none; }
-
-        /* --- CONNECTION LINE (The "Wire") --- */
-        .connection-line {
-            position: absolute;
-            height: 2px;
-            background: #222;
-            width: 0; /* Starts at 0 */
-            left: 50%;
-            top: 50%;
-            transform: translate(-50%, -50%);
-            z-index: -1;
-            transition: width 1s ease;
-        }
-        
-        .connection-line.active {
-            width: 360px; /* Distance between cards */
-            background: var(--neon-green);
-            box-shadow: 0 0 15px var(--neon-green);
-        }
-
-        /* --- STATUS LOG --- */
-        .log-display {
-            position: absolute;
-            bottom: 20px;
-            font-size: 10px;
-            color: #444;
-            max-width: 400px;
-            text-align: center;
-        }
-
     </style>
 </head>
 <body>
 
-    <audio id="remote-audio" autoplay></audio>
+    <div class="grid-bg"></div>
 
-    <div class="interface-stage">
-        
-        <div class="card" id="card-local">
-            <div class="avatar-box"><i class="fas fa-user-astronaut"></i></div>
-            <h2>IDENTITY</h2>
-            <h1 id="display-my-id">UNKNOWN</h1>
-            
-            <div id="init-panel" style="width: 100%; text-align: center;">
-                <input type="text" id="my-id-input" placeholder="CREATE SECRET KEY">
-                <button class="btn btn-init" onclick="initializeSelf()">INITIALIZE</button>
-            </div>
-
-            <div id="local-status" style="margin-top: 20px; color: var(--neon-green); display:none;">
-                <i class="fas fa-check-circle"></i> SYSTEM READY
-            </div>
-        </div>
-
-        <div class="connection-line" id="wire"></div>
-
-        <div class="card" id="card-remote">
-            <div class="avatar-box"><i class="fas fa-user-secret"></i></div>
-            <h2>TARGET</h2>
-            <h1 id="display-remote-id">WAITING...</h1>
-            
-            <div id="call-panel" style="width: 100%; text-align: center;">
-                <input type="text" id="remote-id-input" placeholder="ENTER TARGET KEY">
-                <button class="btn btn-call" onclick="startCall()">CONNECT LINK</button>
-            </div>
-
-            <button class="btn btn-end" id="btn-end" onclick="endCall()">TERMINATE LINK</button>
-        </div>
-
+    <div class="hud-top">
+        <div class="label">YOUR DIGITAL NUMBER</div>
+        <div class="phone-number" id="my-number">...</div>
+        <div class="label" id="status-line">INITIALIZING LINK...</div>
     </div>
 
-    <div class="log-display" id="system-log">> SYSTEM BOOT SEQUENCE INITIATED...</div>
+    <div class="scene" id="scene">
+        <div class="ring"></div>
+        <div class="ring"></div>
+        <div class="ring"></div>
+        <div class="sphere" id="core-sphere"></div>
+    </div>
 
+    <div class="hud-bottom">
+        
+        <div class="dialer-box" id="dialer-ui">
+            <i class="fas fa-hashtag" style="opacity: 0.5;"></i>
+            <input type="text" id="target-number" placeholder="ENTER NUMBER" maxlength="6">
+        </div>
+
+        <div class="btn-grid">
+            <button class="action-btn btn-call" id="btn-call" onclick="initiateCall()">
+                <i class="fas fa-phone"></i>
+            </button>
+            
+            <button class="action-btn btn-answer" id="btn-answer" onclick="answerCall()">
+                <i class="fas fa-phone"></i>
+            </button>
+
+            <button class="action-btn btn-hangup" id="btn-hangup" onclick="endCall()">
+                <i class="fas fa-phone-slash"></i>
+            </button>
+        </div>
+        
+        <div style="margin-top: 15px; font-size: 0.7rem; color: #555;">SECURE P2P CONNECTION • v4.0</div>
+    </div>
+
+    <audio id="remote-audio" autoplay></audio>
     <script>
-        // --- VISUAL LOGIC ---
-        const localCard = document.getElementById('card-local');
-        const remoteCard = document.getElementById('card-remote');
-        const wire = document.getElementById('wire');
-        const log = document.getElementById('system-log');
+        // --- 1. SYSTEM CORE LOGIC ---
+        let myNumber = localStorage.getItem('neural_phone_number');
+        
+        // If no number exists, generate a random 6-digit one
+        if (!myNumber) {
+            myNumber = Math.floor(100000 + Math.random() * 900000).toString();
+            localStorage.setItem('neural_phone_number', myNumber);
+        }
 
-        // 1. Initial Load Animation
-        window.onload = () => {
-            setTimeout(() => {
-                localCard.classList.add('visible'); // Flip in Local Card
-                log.innerText = "> WAITING FOR IDENTITY GENERATION...";
-            }, 500);
-        };
+        document.getElementById('my-number').innerText = myNumber;
 
-        // --- WEBRTC LOGIC ---
-        let peer;
-        let localStream;
-        let currentCall;
+        // --- 2. PEERJS SETUP ---
+        const peer = new Peer(myNumber); // We use the Number as the ID!
+        let currentCall = null;
+        let localStream = null;
 
-        function initializeSelf() {
-            const myId = document.getElementById('my-id-input').value;
-            if (!myId) return;
+        // UI References
+        const scene = document.getElementById('scene');
+        const statusLine = document.getElementById('status-line');
+        const sphere = document.getElementById('core-sphere');
+        const dialerUI = document.getElementById('dialer-ui');
+        const btnCall = document.getElementById('btn-call');
+        const btnAnswer = document.getElementById('btn-answer');
+        const btnHangup = document.getElementById('btn-hangup');
 
-            // Lock UI
-            document.getElementById('init-panel').style.display = 'none';
-            document.getElementById('display-my-id').innerText = myId;
-            document.getElementById('local-status').style.display = 'block';
+        // --- 3. WAKE LOCK (Keep Phone "Alive") ---
+        async function enableWakeLock() {
+            try {
+                if ('wakeLock' in navigator) {
+                    await navigator.wakeLock.request('screen');
+                    console.log("Wake Lock Active: Screen will not sleep.");
+                }
+            } catch (err) {
+                console.log("Wake Lock Error:", err);
+            }
+        }
+        // Activate on click (browser requires interaction)
+        document.body.onclick = () => { enableWakeLock(); };
 
-            // Init Peer
-            peer = new Peer(myId);
+        // --- 4. CONNECTION EVENTS ---
+        peer.on('open', (id) => {
+            statusLine.innerText = "NETWORK ONLINE • STANDBY";
+            statusLine.style.color = "#00d2ff";
+        });
 
-            peer.on('open', (id) => {
-                log.innerText = "> IDENTITY CONFIRMED. WAITING FOR TARGET...";
+        peer.on('error', (err) => {
+            statusLine.innerText = "CONNECTION ERROR";
+            statusLine.style.color = "red";
+        });
+
+        // --- 5. INCOMING CALL LOGIC ---
+        peer.on('call', (call) => {
+            // Ringing State
+            currentCall = call;
+            scene.classList.add('ringing');
+            statusLine.innerText = "INCOMING SIGNAL DETECTED...";
+            statusLine.style.color = "#ff0055";
+            
+            // Switch Buttons
+            dialerUI.style.display = 'none';
+            btnCall.style.display = 'none';
+            btnAnswer.style.display = 'flex';
+            
+            // Play Digital Ringtone
+            startRingtone();
+            
+            // Haptic Feedback (Vibrate phone)
+            if (navigator.vibrate) navigator.vibrate([200, 100, 200, 100, 200]);
+        });
+
+        // --- 6. ANSWER CALL ---
+        function answerCall() {
+            stopRingtone();
+            navigator.mediaDevices.getUserMedia({ audio: true }).then((stream) => {
+                localStream = stream;
+                currentCall.answer(stream); // Send our audio
+                setupActiveCallUI();
                 
-                // Get Mic Access
-                navigator.mediaDevices.getUserMedia({ audio: true }).then((stream) => {
-                    localStream = stream;
-                    // ANIMATION: FLIP IN REMOTE CARD NOW
-                    setTimeout(() => {
-                        remoteCard.classList.add('visible');
-                    }, 500);
+                currentCall.on('stream', (remoteStream) => {
+                    handleRemoteStream(remoteStream);
                 });
             });
-
-            // Handle Incoming Call
-            peer.on('call', (call) => {
-                // Auto Accept for Demo Style
-                log.innerText = "> INCOMING CONNECTION INTERCEPTED...";
-                call.answer(localStream);
-                handleCall(call);
-            });
         }
 
-        function startCall() {
-            const remoteId = document.getElementById('remote-id-input').value;
-            if (!remoteId) return;
+        // --- 7. MAKE CALL ---
+        function initiateCall() {
+            const target = document.getElementById('target-number').value;
+            if (!target || target.length !== 6) return alert("Invalid Number");
 
-            document.getElementById('display-remote-id').innerText = remoteId;
-            log.innerText = "> ESTABLISHING ENCRYPTED TUNNEL...";
-
-            const call = peer.call(remoteId, localStream);
-            handleCall(call);
-        }
-
-        function handleCall(call) {
-            currentCall = call;
-
-            // UI UPDATES FOR CONNECTION
-            document.getElementById('call-panel').style.display = 'none';
-            document.getElementById('btn-end').style.display = 'block';
+            statusLine.innerText = "DIALING " + target + "...";
             
-            // ANIMATION: CONNECT THE CARDS
-            wire.classList.add('active');
-            localCard.classList.add('connected');
-            remoteCard.classList.add('connected');
+            navigator.mediaDevices.getUserMedia({ audio: true }).then((stream) => {
+                localStream = stream;
+                currentCall = peer.call(target, stream);
+                
+                setupActiveCallUI(); // Show hangup button
+                
+                currentCall.on('stream', (remoteStream) => {
+                    handleRemoteStream(remoteStream);
+                });
 
-            // Handle Stream
-            call.on('stream', (remoteStream) => {
-                const audio = document.getElementById('remote-audio');
-                audio.srcObject = remoteStream;
-                log.innerText = "> AUDIO STREAM: SECURE [DTLS-SRTP]";
+                currentCall.on('close', endCall);
             });
-
-            call.on('close', () => resetUI());
         }
 
+        // --- 8. ACTIVE CALL UI & AUDIO VISUALIZER ---
+        function setupActiveCallUI() {
+            scene.classList.remove('ringing');
+            scene.classList.add('active');
+            statusLine.innerText = "LINK ESTABLISHED • ENCRYPTED";
+            statusLine.style.color = "#00ff9d";
+            
+            dialerUI.style.display = 'none';
+            btnCall.style.display = 'none';
+            btnAnswer.style.display = 'none';
+            btnHangup.style.display = 'flex';
+        }
+
+        function handleRemoteStream(remoteStream) {
+            const audio = document.getElementById('remote-audio');
+            audio.srcObject = remoteStream;
+
+            // Audio Visualizer Logic (Moves the Sphere)
+            const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            const src = audioCtx.createMediaStreamSource(remoteStream);
+            const analyser = audioCtx.createAnalyser();
+            src.connect(analyser);
+            analyser.fftSize = 256;
+            const bufferLength = analyser.frequencyBinCount;
+            const dataArray = new Uint8Array(bufferLength);
+
+            function renderFrame() {
+                if (!currentCall) return;
+                requestAnimationFrame(renderFrame);
+                analyser.getByteFrequencyData(dataArray);
+                
+                // Calculate volume average
+                let sum = 0;
+                for(let i = 0; i < bufferLength; i++) { sum += dataArray[i]; }
+                let average = sum / bufferLength;
+
+                // Scale sphere based on volume
+                let scale = 1 + (average / 100); 
+                sphere.style.transform = `scale(${scale})`;
+            }
+            renderFrame();
+        }
+
+        // --- 9. END CALL ---
         function endCall() {
-            if(currentCall) currentCall.close();
-            resetUI();
+            if (currentCall) currentCall.close();
+            if (localStream) localStream.getTracks().forEach(track => track.stop());
+            
+            currentCall = null;
+            scene.classList.remove('active');
+            scene.classList.remove('ringing');
+            
+            // Reset UI
+            btnHangup.style.display = 'none';
+            btnAnswer.style.display = 'none';
+            dialerUI.style.display = 'flex';
+            btnCall.style.display = 'flex';
+            
+            statusLine.innerText = "NETWORK ONLINE • STANDBY";
+            statusLine.style.color = "#00d2ff";
+            sphere.style.transform = "scale(1)";
         }
 
-        function resetUI() {
-            wire.classList.remove('active');
-            localCard.classList.remove('connected');
-            remoteCard.classList.remove('connected');
-            document.getElementById('call-panel').style.display = 'block';
-            document.getElementById('btn-end').style.display = 'none';
-            document.getElementById('display-remote-id').innerText = "WAITING...";
-            log.innerText = "> LINK TERMINATED.";
+        // --- 10. GENERATE RINGTONE (No external files needed) ---
+        let audioCtx, osc, gain;
+        function startRingtone() {
+            audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            osc = audioCtx.createOscillator();
+            gain = audioCtx.createGain();
+            
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+            
+            osc.type = 'square';
+            osc.frequency.setValueAtTime(440, audioCtx.currentTime);
+            osc.frequency.setValueAtTime(554, audioCtx.currentTime + 0.1);
+            
+            // Pulsing effect
+            gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
+            gain.gain.setTargetAtTime(0, audioCtx.currentTime + 0.5, 0.1);
+            
+            osc.start();
+            
+            // Loop the beep
+            osc.onended = () => { if(scene.classList.contains('ringing')) startRingtone(); };
+            osc.stop(audioCtx.currentTime + 0.6);
         }
+        function stopRingtone() {
+            if (audioCtx) audioCtx.close();
+        }
+
     </script>
 </body>
 </html>
