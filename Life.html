@@ -2,414 +2,500 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>THE VOID | Public Archive</title>
-    
-    <link href="https://fonts.googleapis.com/css2?family=Space+Mono:ital,wght@0,400;0,700;1,400&family=Work+Sans:wght@300;400;600&display=swap" rel="stylesheet">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>FLUX.WAVE</title>
+    <link href="https://api.fontshare.com/v2/css?f[]=clash-display@600,700&f[]=satoshi@300,500,700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
     <style>
         :root {
-            --bg: #080808;
-            --surface: #121212;
-            --border: #333;
-            --accent: #00ff41; /* Matrix Green */
-            --text-pri: #e0e0e0;
-            --text-sec: #888;
+            --bg: #050505;
+            --accent: #ff3e3e; /* Radical Red */
+            --accent-glow: rgba(255, 62, 62, 0.4);
+            --text: #ffffff;
+            --surface: rgba(255, 255, 255, 0.03);
+            --glass-border: rgba(255, 255, 255, 0.08);
         }
 
-        * { box-sizing: border-box; margin: 0; padding: 0; }
+        * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
 
         body {
-            background-color: var(--bg);
-            color: var(--text-pri);
-            font-family: 'Work Sans', sans-serif;
-            overflow-x: hidden;
-            min-height: 100vh;
+            background: var(--bg);
+            color: var(--text);
+            font-family: 'Satoshi', sans-serif;
+            height: 100vh;
+            overflow: hidden;
             display: flex;
             flex-direction: column;
-            align-items: center;
-        }
-
-        /* --- BACKGROUND --- */
-        .grid-bg {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background-image: 
-                linear-gradient(var(--border) 1px, transparent 1px),
-                linear-gradient(90deg, var(--border) 1px, transparent 1px);
-            background-size: 40px 40px;
-            opacity: 0.1;
-            z-index: -1;
-        }
-
-        /* --- HEADER --- */
-        header {
-            margin: 60px 0;
-            text-align: center;
-            opacity: 0;
-            animation: fadeIn 1s ease forwards;
-        }
-
-        h1 {
-            font-family: 'Space Mono', monospace;
-            font-size: 3rem;
-            text-transform: uppercase;
-            letter-spacing: -2px;
-            margin-bottom: 10px;
-        }
-        
-        .status-dot {
-            display: inline-block; width: 10px; height: 10px;
-            background: var(--accent); border-radius: 50%;
-            margin-right: 10px;
-            box-shadow: 0 0 10px var(--accent);
-        }
-
-        /* --- BUTTON --- */
-        .btn-main {
-            background: var(--text-pri);
-            color: var(--bg);
-            border: none;
-            padding: 15px 30px;
-            font-family: 'Space Mono', monospace;
-            font-weight: 700;
-            font-size: 1rem;
-            cursor: pointer;
-            transition: transform 0.1s;
-            position: fixed;
-            bottom: 40px;
-            z-index: 100;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
-        }
-        .btn-main:hover { transform: scale(1.05); }
-        .btn-main:active { transform: scale(0.95); }
-
-        /* --- FEED --- */
-        .feed-container {
-            width: 100%;
-            max-width: 700px;
-            padding: 0 20px 120px 20px;
-        }
-
-        .entry {
-            background: var(--surface);
-            border: 1px solid var(--border);
-            padding: 30px;
-            margin-bottom: 20px;
-            position: relative;
-            opacity: 0;
-            transform: translateY(20px);
-            animation: slideUp 0.5s ease forwards;
-            transition: border-color 0.3s;
-        }
-
-        .entry:hover { border-color: var(--text-sec); }
-
-        .entry::before {
-            content: ''; position: absolute; top: 0; left: 0;
-            width: 4px; height: 100%; background: var(--border);
-            transition: background 0.3s;
-        }
-        .entry:hover::before { background: var(--accent); }
-
-        .advice-text {
-            font-size: 1.2rem;
-            line-height: 1.5;
-            margin-bottom: 20px;
-            white-space: pre-wrap;
-        }
-
-        .meta-row {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            border-top: 1px solid var(--border);
-            padding-top: 15px;
-        }
-
-        .song-badge {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            font-family: 'Space Mono', monospace;
-            font-size: 0.8rem;
-            color: var(--text-sec);
-            cursor: pointer;
-            padding: 5px 10px;
-            border-radius: 4px;
-            transition: background 0.2s;
-        }
-        .song-badge:hover { background: rgba(255,255,255,0.05); color: var(--text-pri); }
-        
-        .song-badge img { width: 24px; height: 24px; filter: grayscale(100%); transition: filter 0.2s; }
-        .song-badge:hover img { filter: grayscale(0%); }
-
-        /* --- MODAL --- */
-        .modal {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.9);
-            z-index: 200;
-            display: none;
             justify-content: center;
             align-items: center;
         }
-        .modal.open { display: flex; animation: fadeIn 0.3s; }
 
-        .modal-card {
-            background: var(--bg);
-            border: 1px solid var(--text-pri);
-            padding: 40px;
-            width: 90%; max-width: 500px;
+        /* --- BACKGROUND VISUALIZER --- */
+        #canvas-viz {
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            z-index: 0;
+            opacity: 0.6;
+            filter: blur(40px) contrast(1.5);
         }
 
-        .input-group { margin-bottom: 20px; }
+        /* --- UI LAYER --- */
+        .player-container {
+            position: relative;
+            z-index: 10;
+            width: 100%;
+            max-width: 450px;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            padding: 40px 25px;
+            background: linear-gradient(to bottom, transparent, rgba(0,0,0,0.8));
+        }
+
+        /* Top Bar */
+        .top-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-family: 'Clash Display', sans-serif;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            font-size: 0.9rem;
+            opacity: 0;
+            animation: slideDown 1s ease forwards 0.5s;
+        }
+
+        .tagline { color: #666; font-size: 0.7rem; }
+
+        /* Album Art Area */
+        .art-wrapper {
+            flex-grow: 1;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            position: relative;
+        }
+
+        .disc-container {
+            width: 280px;
+            height: 280px;
+            position: relative;
+            perspective: 1000px;
+        }
+
+        .disc {
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            background: #111;
+            position: relative;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.5);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+            transition: transform 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            border: 2px solid var(--glass-border);
+        }
+
+        .disc img {
+            width: 100%; height: 100%; object-fit: cover; opacity: 0.8;
+            animation: rotate 20s linear infinite;
+            animation-play-state: paused;
+        }
         
-        label {
-            display: block;
-            font-family: 'Space Mono', monospace;
-            color: var(--text-sec);
-            margin-bottom: 8px;
+        .disc.playing img { animation-play-state: running; }
+        .disc.playing { box-shadow: 0 0 40px var(--accent-glow); border-color: var(--accent); }
+
+        /* Center Hole */
+        .disc::after {
+            content: ''; position: absolute;
+            width: 40px; height: 40px;
+            background: var(--bg);
+            border-radius: 50%;
+            border: 2px solid var(--glass-border);
+            z-index: 5;
+        }
+
+        /* Song Info */
+        .info-area {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .song-title {
+            font-family: 'Clash Display', sans-serif;
+            font-size: 2rem;
+            font-weight: 700;
+            margin-bottom: 5px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            background: linear-gradient(to right, #fff, #aaa);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .artist-name {
+            color: #888;
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 2px;
             font-size: 0.8rem;
         }
 
-        textarea, input {
+        /* Controls */
+        .controls-area {
+            background: rgba(20, 20, 20, 0.6);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--glass-border);
+            border-radius: 30px;
+            padding: 25px;
+            transform: translateY(100px);
+            opacity: 0;
+            animation: slideUp 0.8s cubic-bezier(0.23, 1, 0.32, 1) forwards 0.2s;
+        }
+
+        /* Progress Bar */
+        .progress-container {
             width: 100%;
-            background: var(--surface);
-            border: 1px solid var(--border);
-            color: var(--text-pri);
-            padding: 15px;
-            font-family: 'Work Sans', sans-serif;
-            font-size: 1rem;
-            outline: none;
+            height: 6px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 10px;
+            margin-bottom: 25px;
+            cursor: pointer;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            width: 0%;
+            background: var(--accent);
+            border-radius: 10px;
+            position: relative;
+            box-shadow: 0 0 15px var(--accent);
+        }
+
+        .time-stamps {
+            display: flex; justify-content: space-between;
+            font-size: 0.75rem; color: #555; margin-top: 8px; font-weight: 600;
+        }
+
+        /* Buttons */
+        .buttons-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 10px;
+        }
+
+        .btn {
+            background: none; border: none; color: white;
+            font-size: 1.5rem; cursor: pointer;
+            opacity: 0.7; transition: all 0.2s;
+        }
+        .btn:hover { opacity: 1; transform: scale(1.1); }
+        .btn:active { transform: scale(0.9); }
+
+        .btn-main {
+            width: 70px; height: 70px;
+            background: white; color: black;
+            border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 1.8rem;
+            opacity: 1;
+            box-shadow: 0 0 20px rgba(255,255,255,0.2);
+        }
+
+        /* File Input */
+        .file-upload-btn {
+            position: absolute; top: 0; left: 0;
+            width: 100%; height: 100%; opacity: 0;
+            cursor: pointer; z-index: 100;
         }
         
-        textarea:focus, input:focus { border-color: var(--accent); }
+        .upload-icon { position: relative; }
 
-        /* Search Results */
-        .search-results {
-            background: var(--surface);
-            border: 1px solid var(--border);
-            border-top: none;
-            max-height: 150px;
-            overflow-y: auto;
-            display: none;
+        /* Animations */
+        @keyframes rotate { 100% { transform: rotate(360deg); } }
+        @keyframes slideUp { to { transform: translateY(0); opacity: 1; } }
+        @keyframes slideDown { to { transform: translateY(0); opacity: 1; } }
+
+        /* Start Overlay */
+        #start-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: #000; z-index: 999;
+            display: flex; flex-direction: column;
+            align-items: center; justify-content: center;
+            transition: opacity 0.5s;
         }
-        .result-item {
-            padding: 10px;
-            border-bottom: 1px solid var(--border);
+        .start-btn {
+            padding: 15px 40px;
+            border: 1px solid #333;
+            background: transparent;
+            color: white;
+            font-family: 'Clash Display';
+            font-size: 1.2rem;
             cursor: pointer;
-            display: flex; align-items: center; gap: 10px;
+            margin-top: 20px;
+            letter-spacing: 2px;
+            transition: 0.3s;
         }
-        .result-item:hover { background: #222; }
-        .result-item img { width: 30px; height: 30px; }
-
-        @keyframes fadeIn { to { opacity: 1; } }
-        @keyframes slideUp { to { opacity: 1; transform: translateY(0); } }
+        .start-btn:hover { background: white; color: black; }
 
     </style>
 </head>
 <body>
 
-    <div class="grid-bg"></div>
+    <canvas id="canvas-viz"></canvas>
 
-    <header>
-        <h1><span class="status-dot"></span>The Void</h1>
-        <p style="font-family:'Space Mono'; color:#555;">PUBLIC ARCHIVE // GLOBAL_ACCESS_ENABLED</p>
-    </header>
-
-    <div class="feed-container" id="feed">
-        <p style="text-align:center; color:#444;">Decrypting signal...</p>
+    <div id="start-overlay">
+        <h1 style="font-family:'Clash Display'; font-size:3rem; margin-bottom:10px;">FLUX</h1>
+        <p style="color:#666; letter-spacing:1px;">AUDIO EXPERIENCE</p>
+        <button class="start-btn" onclick="initAudio()">ENTER</button>
     </div>
 
-    <button class="btn-main" onclick="openModal()">+ TRANSMIT DATA</button>
+    <div class="player-container">
+        <div class="top-bar">
+            <span>FLUX.WAVE</span>
+            <span class="tagline">METRO // MODE</span>
+            <div class="upload-icon btn">
+                <i class="fa-solid fa-folder-open"></i>
+                <input type="file" id="file-input" class="file-upload-btn" accept="audio/*">
+            </div>
+        </div>
 
-    <div class="modal" id="modal">
-        <div class="modal-card">
-            <h2 style="font-family:'Space Mono'; margin-bottom:20px;">NEW TRANSMISSION</h2>
-            
-            <div class="input-group">
-                <label>DATA_PACKET (ADVICE)</label>
-                <textarea id="inp-advice" rows="4"></textarea>
+        <div class="art-wrapper">
+            <div class="disc-container">
+                <div class="disc" id="disc">
+                    <img src="https://images.unsplash.com/photo-1614613535308-eb5fbd3d2c17?q=80&w=1000&auto=format&fit=crop" id="album-art" alt="art">
+                </div>
+            </div>
+        </div>
+
+        <div class="info-area">
+            <h2 class="song-title" id="title">Nightcall</h2>
+            <p class="artist-name" id="artist">Kavinsky (Demo)</p>
+        </div>
+
+        <div class="controls-area">
+            <div class="progress-container" id="progress-container">
+                <div class="progress-fill" id="progress-fill"></div>
+            </div>
+            <div class="time-stamps">
+                <span id="curr-time">0:00</span>
+                <span id="dur-time">0:00</span>
             </div>
 
-            <div class="input-group">
-                <label>AUDIO_FREQUENCY (SONG SEARCH)</label>
-                <input type="text" id="inp-search" onkeyup="searchMusic(this.value)" placeholder="Search...">
-                <div class="search-results" id="results"></div>
+            <div class="buttons-row">
+                <button class="btn" onclick="prevSong()"><i class="fa-solid fa-backward-step"></i></button>
+                <button class="btn-main" onclick="togglePlay()" id="play-btn"><i class="fa-solid fa-play"></i></button>
+                <button class="btn" onclick="nextSong()"><i class="fa-solid fa-forward-step"></i></button>
             </div>
-
-            <input type="hidden" id="final-song-name">
-            <input type="hidden" id="final-song-artist">
-            <input type="hidden" id="final-song-img">
-            <input type="hidden" id="final-song-preview">
-
-            <button class="btn-main" style="position:static; width:100%; margin-top:10px;" onclick="submitData()">SEND</button>
-            <button onclick="closeModal()" style="background:none; border:none; color:#555; width:100%; margin-top:10px; cursor:pointer; font-family:'Space Mono'">CANCEL</button>
         </div>
     </div>
 
-    <audio id="audio-player"></audio>
+    <audio id="audio" crossOrigin="anonymous"></audio>
 
     <script>
-        // =================================================================
-        // 🔴 SETUP AREA: PASTE YOUR LINKS HERE 🔴
-        // =================================================================
-        
-        // 1. Create a Google Form with 2 questions: "Advice" and "SongJSON"
-        // 2. Get the "pre-filled" link (Instructions below)
-        const GOOGLE_FORM_URL = 'https://docs.google.com/forms/d/e/1FAIpQLSdAVFyafah2NE7tBJjYKoV1TTC_yKzyPFsuXuKDuJKMiXM5yA/formResponse?usp=pp_url&entry.126345854=ADVICE123&entry.828306240=Song456';
-        const FIELD_ID_ADVICE = 'entry.126345854'; // Look for "entry.xxxx" in pre-filled link
-        const FIELD_ID_SONG = 'entry.828306240';   // Look for "entry.xxxx" for the 2nd question
-
-        // 3. Create a Google Sheet from responses -> File -> Share -> Publish to Web -> CSV
-        const GOOGLE_SHEET_CSV = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQzsxuV02uEshc2hjNaO_nlDRHqvlqVmSHVpHj9C-X6x5FDc9O_FcZnLLDyNjLFa0Mt6m8kYmRM4Mmh/pub?output=csv'
-        // =================================================================
-
-        // --- 1. LOAD DATA ---
-        async function loadEntries() {
-            try {
-                const res = await fetch(GOOGLE_SHEET_CSV);
-                const text = await res.text();
-                const rows = csvToArray(text);
-                
-                const feed = document.getElementById('feed');
-                feed.innerHTML = '';
-
-                // Skip header row (i=1), reverse to show newest first
-                for (let i = rows.length - 1; i >= 1; i--) {
-                    const row = rows[i];
-                    // Google Sheets CSV format: [Timestamp, Advice, SongJSON]
-                    if (row.length < 3) continue;
-
-                    const advice = row[1]; // Column B
-                    let songData = {};
-                    
-                    try { songData = JSON.parse(row[2]); } // Column C
-                    catch(e) { continue; } // Skip if bad data
-
-                    renderCard(advice, songData);
-                }
-            } catch (e) {
-                document.getElementById('feed').innerHTML = '<p style="text-align:center; padding:20px;">⚠ SETUP REQUIRED: Edit the HTML file and add your Google Sheet Links.</p>';
+        // --- DATA ---
+        // Default Copyright Free Tracks (For demo purposes)
+        const defaultTracks = [
+            {
+                title: "Cyberpunk City",
+                artist: "Infraction",
+                src: "https://files.freemusicarchive.org/storage-freemusicarchive-org/music/no_curator/Tours/Enthusiast/Tours_-_01_-_Enthusiast.mp3", // Placeholder
+                img: "https://images.unsplash.com/photo-1614613535308-eb5fbd3d2c17?q=80&w=600&auto=format&fit=crop"
+            },
+            {
+                title: "Night Drive",
+                artist: "Lofi Beats",
+                src: "https://files.freemusicarchive.org/storage-freemusicarchive-org/music/ccCommunity/Chad_Crouch/Arps/Chad_Crouch_-_Elips.mp3", // Placeholder
+                img: "https://images.unsplash.com/photo-1493225255756-d9584f8606e9?q=80&w=600&auto=format&fit=crop"
             }
+        ];
+
+        let tracks = [...defaultTracks];
+        let currentIdx = 0;
+        let isPlaying = false;
+        let audioContext, analyser, source, canvas, ctx;
+
+        // --- ELEMENTS ---
+        const audio = document.getElementById('audio');
+        const titleEl = document.getElementById('title');
+        const artistEl = document.getElementById('artist');
+        const artEl = document.getElementById('album-art');
+        const playBtn = document.getElementById('play-btn');
+        const disc = document.getElementById('disc');
+        const progressFill = document.getElementById('progress-fill');
+        const progressContainer = document.getElementById('progress-container');
+
+        // --- INIT AUDIO CONTEXT (VISUALIZER) ---
+        function initAudio() {
+            document.getElementById('start-overlay').style.opacity = '0';
+            setTimeout(() => document.getElementById('start-overlay').remove(), 500);
+
+            // Web Audio API setup
+            audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            analyser = audioContext.createAnalyser();
+            source = audioContext.createMediaElementSource(audio);
+            source.connect(analyser);
+            analyser.connect(audioContext.destination);
+            analyser.fftSize = 256;
+
+            // Start Canvas Animation
+            initCanvas();
+            loadTrack(currentIdx);
         }
 
-        function renderCard(advice, song, animate = true) {
-            const div = document.createElement('div');
-            div.className = 'entry';
-            if(!animate) { div.style.animation = 'none'; div.style.opacity = 1; div.style.transform = 'none'; }
-            
-            div.innerHTML = `
-                <div class="advice-text">"${advice}"</div>
-                <div class="meta-row">
-                    <div class="song-badge" onclick="playAudio('${song.preview}', this)">
-                        <img src="${song.img}" alt="art">
-                        <span>${song.name} - ${song.artist}</span>
-                        <span style="color:var(--accent)">▶</span>
-                    </div>
-                </div>
-            `;
-            // Add to top
-            const feed = document.getElementById('feed');
-            feed.insertBefore(div, feed.firstChild);
+        // --- PLAYER FUNCTIONS ---
+        function loadTrack(index) {
+            const track = tracks[index];
+            titleEl.textContent = track.title;
+            artistEl.textContent = track.artist;
+            artEl.src = track.img;
+            audio.src = track.src;
+            if(isPlaying) playTrack();
         }
 
-        // --- 2. SUBMIT DATA ---
-        function submitData() {
-            const advice = document.getElementById('inp-advice').value;
-            const sName = document.getElementById('final-song-name').value;
+        function playTrack() {
+            // Resume context if suspended (browser policy)
+            if (audioContext && audioContext.state === 'suspended') {
+                audioContext.resume();
+            }
             
-            if(!advice || !sName) { alert("Data incomplete."); return; }
-
-            // Bundle song info into JSON string
-            const songObj = {
-                name: sName,
-                artist: document.getElementById('final-song-artist').value,
-                img: document.getElementById('final-song-img').value,
-                preview: document.getElementById('final-song-preview').value
-            };
-            const songJSON = JSON.stringify(songObj);
-
-            // OPTIMISTIC UI: Show it immediately before sending
-            renderCard(advice, songObj, true);
-            closeModal();
-            document.getElementById('inp-advice').value = '';
-            document.getElementById('inp-search').value = '';
-
-            // SEND TO GOOGLE FORM (Hidden Request)
-            const formData = new FormData();
-            formData.append(FIELD_ID_ADVICE, advice);
-            formData.append(FIELD_ID_SONG, songJSON);
-
-            fetch(GOOGLE_FORM_URL, {
-                method: 'POST',
-                mode: 'no-cors', // Important for Google Forms
-                body: formData
-            }).catch(e => console.log("Sent (no-cors mode)"));
-            
-            alert("Transmitted. It may take 1-2 minutes to appear for others (Google caching).");
+            audio.play();
+            isPlaying = true;
+            playBtn.innerHTML = '<i class="fa-solid fa-pause"></i>';
+            disc.classList.add('playing');
         }
 
-        // --- 3. ITUNES SEARCH ---
-        let timer;
-        function searchMusic(query) {
-            clearTimeout(timer);
-            if(query.length < 2) return;
-            
-            timer = setTimeout(async () => {
-                const res = await fetch(`https://itunes.apple.com/search?term=${encodeURIComponent(query)}&entity=song&limit=4`);
-                const data = await res.json();
-                const list = document.getElementById('results');
-                list.innerHTML = '';
-                list.style.display = 'block';
+        function pauseTrack() {
+            audio.pause();
+            isPlaying = false;
+            playBtn.innerHTML = '<i class="fa-solid fa-play"></i>';
+            disc.classList.remove('playing');
+        }
 
-                data.results.forEach(s => {
-                    const item = document.createElement('div');
-                    item.className = 'result-item';
-                    item.innerHTML = `<img src="${s.artworkUrl60}"> <div><b>${s.trackName}</b><br><small>${s.artistName}</small></div>`;
-                    item.onclick = () => {
-                        document.getElementById('inp-search').value = s.trackName;
-                        document.getElementById('final-song-name').value = s.trackName;
-                        document.getElementById('final-song-artist').value = s.artistName;
-                        document.getElementById('final-song-img').value = s.artworkUrl60;
-                        document.getElementById('final-song-preview').value = s.previewUrl;
-                        list.style.display = 'none';
-                    };
-                    list.appendChild(item);
+        function togglePlay() {
+            if (isPlaying) pauseTrack();
+            else playTrack();
+        }
+
+        function nextSong() {
+            currentIdx = (currentIdx + 1) % tracks.length;
+            loadTrack(currentIdx);
+            playTrack();
+        }
+
+        function prevSong() {
+            currentIdx = (currentIdx - 1 + tracks.length) % tracks.length;
+            loadTrack(currentIdx);
+            playTrack();
+        }
+
+        // --- PROGRESS BAR ---
+        audio.addEventListener('timeupdate', (e) => {
+            const { duration, currentTime } = e.srcElement;
+            const progressPercent = (currentTime / duration) * 100;
+            progressFill.style.width = `${progressPercent}%`;
+            
+            // Update time text
+            document.getElementById('curr-time').innerText = formatTime(currentTime);
+            document.getElementById('dur-time').innerText = formatTime(duration || 0);
+        });
+
+        audio.addEventListener('ended', nextSong);
+
+        progressContainer.addEventListener('click', (e) => {
+            const width = progressContainer.clientWidth;
+            const clickX = e.offsetX;
+            const duration = audio.duration;
+            audio.currentTime = (clickX / width) * duration;
+        });
+
+        function formatTime(seconds) {
+            const min = Math.floor(seconds / 60);
+            const sec = Math.floor(seconds % 60);
+            return `${min}:${sec < 10 ? '0' + sec : sec}`;
+        }
+
+        // --- FILE UPLOAD (LOCAL MUSIC) ---
+        document.getElementById('file-input').addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (file) {
+                const objectUrl = URL.createObjectURL(file);
+                
+                // Add to playlist as next song
+                tracks.splice(currentIdx + 1, 0, {
+                    title: file.name.replace(/\.[^/.]+$/, ""), // Remove extension
+                    artist: "Local File",
+                    src: objectUrl,
+                    img: "https://images.unsplash.com/photo-1619983081563-430f63602796?q=80&w=600&auto=format&fit=crop" // Generic Art
                 });
-            }, 500);
+                
+                nextSong(); // Play it immediately
+            }
+        });
+
+        // --- CANVAS VISUALIZER (The "Crazy" Part) ---
+        function initCanvas() {
+            canvas = document.getElementById('canvas-viz');
+            ctx = canvas.getContext('2d');
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+
+            const bufferLength = analyser.frequencyBinCount;
+            constdataArray = new Uint8Array(bufferLength);
+            const dataArray = new Uint8Array(bufferLength);
+
+            function animate() {
+                requestAnimationFrame(animate);
+                analyser.getByteFrequencyData(dataArray);
+
+                ctx.fillStyle = 'rgba(5, 5, 5, 0.1)'; // Trail effect
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+                const cx = canvas.width / 2;
+                const cy = canvas.height / 2;
+                const radius = 150;
+
+                // Draw circular visualizer behind the disc
+                for (let i = 0; i < bufferLength; i++) {
+                    const barHeight = dataArray[i] * 1.5;
+                    const angle = (i * Math.PI * 2) / bufferLength; // Circular layout
+                    
+                    const x = cx + Math.cos(angle) * (radius + barHeight / 2);
+                    const y = cy + Math.sin(angle) * (radius + barHeight / 2);
+                    
+                    ctx.beginPath();
+                    ctx.moveTo(cx + Math.cos(angle) * radius, cy + Math.sin(angle) * radius);
+                    ctx.lineTo(x, y);
+                    
+                    // Dynamic Color based on frequency
+                    const r = barHeight + 25 * (i/bufferLength);
+                    const g = 50;
+                    const b = 255 - barHeight;
+                    
+                    ctx.strokeStyle = `rgb(${r},${g},${b})`;
+                    ctx.lineWidth = 4;
+                    ctx.lineCap = 'round';
+                    ctx.stroke();
+                }
+            }
+
+            animate();
         }
 
-        // --- 4. UTILS ---
-        function csvToArray(text) {
-            // Simple CSV parser handling quotes
-            const re_valid = /^\s*(?:'[^'\\]*(?:\\[\S\s][^'\\]*)*'|"[^"\\]*(?:\\[\S\s][^"\\]*)*"|[^,'"\s\\]*(?:\s+[^,'"\s\\]+)*)\s*(?:,\s*(?:'[^'\\]*(?:\\[\S\s][^'\\]*)*'|"[^"\\]*(?:\\[\S\s][^"\\]*)*"|[^,'"\s\\]*(?:\s+[^,'"\s\\]+)*)\s*)*$/;
-            const re_value = /(?!\s*$)\s*(?:'([^'\\]*(?:\\[\S\s][^'\\]*)*)'|"([^"\\]*(?:\\[\S\s][^"\\]*)*)"|([^,'"\s\\]*(?:\s+[^,'"\s\\]+)*))\s*(?:,|$)/g;
-            const rows = [];
-            text.split('\n').forEach(line => {
-                if (!line.trim()) return;
-                const row = [];
-                line.replace(re_value, (m0, m1, m2, m3) => {
-                    if (m1 !== undefined) row.push(m1.replace(/\\'/g, "'"));
-                    else if (m2 !== undefined) row.push(m2.replace(/\\"/g, '"').replace(/""/g, '"')); // Handle double quotes
-                    else if (m3 !== undefined) row.push(m3);
-                    return '';
-                });
-                rows.push(row);
-            });
-            return rows;
-        }
-
-        function playAudio(url, el) {
-            const player = document.getElementById('audio-player');
-            player.src = url;
-            player.play();
-            // Visual feedback could go here
-        }
-
-        function openModal() { document.getElementById('modal').classList.add('open'); }
-        function closeModal() { document.getElementById('modal').classList.remove('open'); }
-
-        window.onload = loadEntries;
+        // Resize canvas on window resize
+        window.addEventListener('resize', () => {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        });
 
     </script>
 </body>
