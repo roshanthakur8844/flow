@@ -1,0 +1,417 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>THE VOID | Public Archive</title>
+    
+    <link href="https://fonts.googleapis.com/css2?family=Space+Mono:ital,wght@0,400;0,700;1,400&family=Work+Sans:wght@300;400;600&display=swap" rel="stylesheet">
+    
+    <style>
+        :root {
+            --bg: #080808;
+            --surface: #121212;
+            --border: #333;
+            --accent: #00ff41; /* Matrix Green */
+            --text-pri: #e0e0e0;
+            --text-sec: #888;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            background-color: var(--bg);
+            color: var(--text-pri);
+            font-family: 'Work Sans', sans-serif;
+            overflow-x: hidden;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        /* --- BACKGROUND --- */
+        .grid-bg {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background-image: 
+                linear-gradient(var(--border) 1px, transparent 1px),
+                linear-gradient(90deg, var(--border) 1px, transparent 1px);
+            background-size: 40px 40px;
+            opacity: 0.1;
+            z-index: -1;
+        }
+
+        /* --- HEADER --- */
+        header {
+            margin: 60px 0;
+            text-align: center;
+            opacity: 0;
+            animation: fadeIn 1s ease forwards;
+        }
+
+        h1 {
+            font-family: 'Space Mono', monospace;
+            font-size: 3rem;
+            text-transform: uppercase;
+            letter-spacing: -2px;
+            margin-bottom: 10px;
+        }
+        
+        .status-dot {
+            display: inline-block; width: 10px; height: 10px;
+            background: var(--accent); border-radius: 50%;
+            margin-right: 10px;
+            box-shadow: 0 0 10px var(--accent);
+        }
+
+        /* --- BUTTON --- */
+        .btn-main {
+            background: var(--text-pri);
+            color: var(--bg);
+            border: none;
+            padding: 15px 30px;
+            font-family: 'Space Mono', monospace;
+            font-weight: 700;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: transform 0.1s;
+            position: fixed;
+            bottom: 40px;
+            z-index: 100;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+        }
+        .btn-main:hover { transform: scale(1.05); }
+        .btn-main:active { transform: scale(0.95); }
+
+        /* --- FEED --- */
+        .feed-container {
+            width: 100%;
+            max-width: 700px;
+            padding: 0 20px 120px 20px;
+        }
+
+        .entry {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            padding: 30px;
+            margin-bottom: 20px;
+            position: relative;
+            opacity: 0;
+            transform: translateY(20px);
+            animation: slideUp 0.5s ease forwards;
+            transition: border-color 0.3s;
+        }
+
+        .entry:hover { border-color: var(--text-sec); }
+
+        .entry::before {
+            content: ''; position: absolute; top: 0; left: 0;
+            width: 4px; height: 100%; background: var(--border);
+            transition: background 0.3s;
+        }
+        .entry:hover::before { background: var(--accent); }
+
+        .advice-text {
+            font-size: 1.2rem;
+            line-height: 1.5;
+            margin-bottom: 20px;
+            white-space: pre-wrap;
+        }
+
+        .meta-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border-top: 1px solid var(--border);
+            padding-top: 15px;
+        }
+
+        .song-badge {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-family: 'Space Mono', monospace;
+            font-size: 0.8rem;
+            color: var(--text-sec);
+            cursor: pointer;
+            padding: 5px 10px;
+            border-radius: 4px;
+            transition: background 0.2s;
+        }
+        .song-badge:hover { background: rgba(255,255,255,0.05); color: var(--text-pri); }
+        
+        .song-badge img { width: 24px; height: 24px; filter: grayscale(100%); transition: filter 0.2s; }
+        .song-badge:hover img { filter: grayscale(0%); }
+
+        /* --- MODAL --- */
+        .modal {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.9);
+            z-index: 200;
+            display: none;
+            justify-content: center;
+            align-items: center;
+        }
+        .modal.open { display: flex; animation: fadeIn 0.3s; }
+
+        .modal-card {
+            background: var(--bg);
+            border: 1px solid var(--text-pri);
+            padding: 40px;
+            width: 90%; max-width: 500px;
+        }
+
+        .input-group { margin-bottom: 20px; }
+        
+        label {
+            display: block;
+            font-family: 'Space Mono', monospace;
+            color: var(--text-sec);
+            margin-bottom: 8px;
+            font-size: 0.8rem;
+        }
+
+        textarea, input {
+            width: 100%;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            color: var(--text-pri);
+            padding: 15px;
+            font-family: 'Work Sans', sans-serif;
+            font-size: 1rem;
+            outline: none;
+        }
+        
+        textarea:focus, input:focus { border-color: var(--accent); }
+
+        /* Search Results */
+        .search-results {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-top: none;
+            max-height: 150px;
+            overflow-y: auto;
+            display: none;
+        }
+        .result-item {
+            padding: 10px;
+            border-bottom: 1px solid var(--border);
+            cursor: pointer;
+            display: flex; align-items: center; gap: 10px;
+        }
+        .result-item:hover { background: #222; }
+        .result-item img { width: 30px; height: 30px; }
+
+        @keyframes fadeIn { to { opacity: 1; } }
+        @keyframes slideUp { to { opacity: 1; transform: translateY(0); } }
+
+    </style>
+</head>
+<body>
+
+    <div class="grid-bg"></div>
+
+    <header>
+        <h1><span class="status-dot"></span>The Void</h1>
+        <p style="font-family:'Space Mono'; color:#555;">PUBLIC ARCHIVE // GLOBAL_ACCESS_ENABLED</p>
+    </header>
+
+    <div class="feed-container" id="feed">
+        <p style="text-align:center; color:#444;">Decrypting signal...</p>
+    </div>
+
+    <button class="btn-main" onclick="openModal()">+ TRANSMIT DATA</button>
+
+    <div class="modal" id="modal">
+        <div class="modal-card">
+            <h2 style="font-family:'Space Mono'; margin-bottom:20px;">NEW TRANSMISSION</h2>
+            
+            <div class="input-group">
+                <label>DATA_PACKET (ADVICE)</label>
+                <textarea id="inp-advice" rows="4"></textarea>
+            </div>
+
+            <div class="input-group">
+                <label>AUDIO_FREQUENCY (SONG SEARCH)</label>
+                <input type="text" id="inp-search" onkeyup="searchMusic(this.value)" placeholder="Search...">
+                <div class="search-results" id="results"></div>
+            </div>
+
+            <input type="hidden" id="final-song-name">
+            <input type="hidden" id="final-song-artist">
+            <input type="hidden" id="final-song-img">
+            <input type="hidden" id="final-song-preview">
+
+            <button class="btn-main" style="position:static; width:100%; margin-top:10px;" onclick="submitData()">SEND</button>
+            <button onclick="closeModal()" style="background:none; border:none; color:#555; width:100%; margin-top:10px; cursor:pointer; font-family:'Space Mono'">CANCEL</button>
+        </div>
+    </div>
+
+    <audio id="audio-player"></audio>
+
+    <script>
+        // =================================================================
+        // 🔴 SETUP AREA: PASTE YOUR LINKS HERE 🔴
+        // =================================================================
+        
+        // 1. Create a Google Form with 2 questions: "Advice" and "SongJSON"
+        // 2. Get the "pre-filled" link (Instructions below)
+        const GOOGLE_FORM_URL = 'https://docs.google.com/forms/d/e/1FAIpQLSdAVFyafah2NE7tBJjYKoV1TTC_yKzyPFsuXuKDuJKMiXM5yA/formResponse?usp=pp_url&entry.126345854=ADVICE123&entry.828306240=Song456';
+        const FIELD_ID_ADVICE = 'entry.126345854'; // Look for "entry.xxxx" in pre-filled link
+        const FIELD_ID_SONG = 'entry.828306240';   // Look for "entry.xxxx" for the 2nd question
+
+        // 3. Create a Google Sheet from responses -> File -> Share -> Publish to Web -> CSV
+        const GOOGLE_SHEET_CSV = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQzsxuV02uEshc2hjNaO_nlDRHqvlqVmSHVpHj9C-X6x5FDc9O_FcZnLLDyNjLFa0Mt6m8kYmRM4Mmh/pubhtml?gid=1141898827&single=true';
+
+        // =================================================================
+
+        // --- 1. LOAD DATA ---
+        async function loadEntries() {
+            try {
+                const res = await fetch(GOOGLE_SHEET_CSV);
+                const text = await res.text();
+                const rows = csvToArray(text);
+                
+                const feed = document.getElementById('feed');
+                feed.innerHTML = '';
+
+                // Skip header row (i=1), reverse to show newest first
+                for (let i = rows.length - 1; i >= 1; i--) {
+                    const row = rows[i];
+                    // Google Sheets CSV format: [Timestamp, Advice, SongJSON]
+                    if (row.length < 3) continue;
+
+                    const advice = row[1]; // Column B
+                    let songData = {};
+                    
+                    try { songData = JSON.parse(row[2]); } // Column C
+                    catch(e) { continue; } // Skip if bad data
+
+                    renderCard(advice, songData);
+                }
+            } catch (e) {
+                document.getElementById('feed').innerHTML = '<p style="text-align:center; padding:20px;">⚠ SETUP REQUIRED: Edit the HTML file and add your Google Sheet Links.</p>';
+            }
+        }
+
+        function renderCard(advice, song, animate = true) {
+            const div = document.createElement('div');
+            div.className = 'entry';
+            if(!animate) { div.style.animation = 'none'; div.style.opacity = 1; div.style.transform = 'none'; }
+            
+            div.innerHTML = `
+                <div class="advice-text">"${advice}"</div>
+                <div class="meta-row">
+                    <div class="song-badge" onclick="playAudio('${song.preview}', this)">
+                        <img src="${song.img}" alt="art">
+                        <span>${song.name} - ${song.artist}</span>
+                        <span style="color:var(--accent)">▶</span>
+                    </div>
+                </div>
+            `;
+            // Add to top
+            const feed = document.getElementById('feed');
+            feed.insertBefore(div, feed.firstChild);
+        }
+
+        // --- 2. SUBMIT DATA ---
+        function submitData() {
+            const advice = document.getElementById('inp-advice').value;
+            const sName = document.getElementById('final-song-name').value;
+            
+            if(!advice || !sName) { alert("Data incomplete."); return; }
+
+            // Bundle song info into JSON string
+            const songObj = {
+                name: sName,
+                artist: document.getElementById('final-song-artist').value,
+                img: document.getElementById('final-song-img').value,
+                preview: document.getElementById('final-song-preview').value
+            };
+            const songJSON = JSON.stringify(songObj);
+
+            // OPTIMISTIC UI: Show it immediately before sending
+            renderCard(advice, songObj, true);
+            closeModal();
+            document.getElementById('inp-advice').value = '';
+            document.getElementById('inp-search').value = '';
+
+            // SEND TO GOOGLE FORM (Hidden Request)
+            const formData = new FormData();
+            formData.append(FIELD_ID_ADVICE, advice);
+            formData.append(FIELD_ID_SONG, songJSON);
+
+            fetch(GOOGLE_FORM_URL, {
+                method: 'POST',
+                mode: 'no-cors', // Important for Google Forms
+                body: formData
+            }).catch(e => console.log("Sent (no-cors mode)"));
+            
+            alert("Transmitted. It may take 1-2 minutes to appear for others (Google caching).");
+        }
+
+        // --- 3. ITUNES SEARCH ---
+        let timer;
+        function searchMusic(query) {
+            clearTimeout(timer);
+            if(query.length < 2) return;
+            
+            timer = setTimeout(async () => {
+                const res = await fetch(`https://itunes.apple.com/search?term=${encodeURIComponent(query)}&entity=song&limit=4`);
+                const data = await res.json();
+                const list = document.getElementById('results');
+                list.innerHTML = '';
+                list.style.display = 'block';
+
+                data.results.forEach(s => {
+                    const item = document.createElement('div');
+                    item.className = 'result-item';
+                    item.innerHTML = `<img src="${s.artworkUrl60}"> <div><b>${s.trackName}</b><br><small>${s.artistName}</small></div>`;
+                    item.onclick = () => {
+                        document.getElementById('inp-search').value = s.trackName;
+                        document.getElementById('final-song-name').value = s.trackName;
+                        document.getElementById('final-song-artist').value = s.artistName;
+                        document.getElementById('final-song-img').value = s.artworkUrl60;
+                        document.getElementById('final-song-preview').value = s.previewUrl;
+                        list.style.display = 'none';
+                    };
+                    list.appendChild(item);
+                });
+            }, 500);
+        }
+
+        // --- 4. UTILS ---
+        function csvToArray(text) {
+            // Simple CSV parser handling quotes
+            const re_valid = /^\s*(?:'[^'\\]*(?:\\[\S\s][^'\\]*)*'|"[^"\\]*(?:\\[\S\s][^"\\]*)*"|[^,'"\s\\]*(?:\s+[^,'"\s\\]+)*)\s*(?:,\s*(?:'[^'\\]*(?:\\[\S\s][^'\\]*)*'|"[^"\\]*(?:\\[\S\s][^"\\]*)*"|[^,'"\s\\]*(?:\s+[^,'"\s\\]+)*)\s*)*$/;
+            const re_value = /(?!\s*$)\s*(?:'([^'\\]*(?:\\[\S\s][^'\\]*)*)'|"([^"\\]*(?:\\[\S\s][^"\\]*)*)"|([^,'"\s\\]*(?:\s+[^,'"\s\\]+)*))\s*(?:,|$)/g;
+            const rows = [];
+            text.split('\n').forEach(line => {
+                if (!line.trim()) return;
+                const row = [];
+                line.replace(re_value, (m0, m1, m2, m3) => {
+                    if (m1 !== undefined) row.push(m1.replace(/\\'/g, "'"));
+                    else if (m2 !== undefined) row.push(m2.replace(/\\"/g, '"').replace(/""/g, '"')); // Handle double quotes
+                    else if (m3 !== undefined) row.push(m3);
+                    return '';
+                });
+                rows.push(row);
+            });
+            return rows;
+        }
+
+        function playAudio(url, el) {
+            const player = document.getElementById('audio-player');
+            player.src = url;
+            player.play();
+            // Visual feedback could go here
+        }
+
+        function openModal() { document.getElementById('modal').classList.add('open'); }
+        function closeModal() { document.getElementById('modal').classList.remove('open'); }
+
+        window.onload = loadEntries;
+
+    </script>
+</body>
+</html>
