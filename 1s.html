@@ -3,184 +3,154 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>DESI.FLOW | Full Music Player</title>
+    <title>DESI.FLOW | Premium Audio</title>
     
-    <link href="https://api.fontshare.com/v2/css?f[]=satoshi@300,500,700,900&f[]=rozha-one@400&display=swap" rel="stylesheet">
+    <link href="https://api.fontshare.com/v2/css?f[]=satoshi@400,500,700,900&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
     <style>
         :root {
-            --bg: #0f0c29;
-            --bg-gradient: linear-gradient(to right, #24243e, #302b63, #0f0c29);
-            --gold: #ffd700;
-            --gold-dim: rgba(255, 215, 0, 0.2);
-            --glass: rgba(255, 255, 255, 0.05);
-            --border: rgba(255, 255, 255, 0.1);
+            --bg: #050505;
+            --surface: #121212;
+            --primary: #00e5ff; /* Cyan */
+            --accent: #7000ff; /* Purple */
             --text: #ffffff;
-            --accent: #ff0055;
+            --text-dim: #888888;
         }
 
         * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
 
         body {
-            background: var(--bg-gradient);
+            background-color: var(--bg);
             color: var(--text);
             font-family: 'Satoshi', sans-serif;
             height: 100vh;
-            overflow: hidden;
             display: flex;
             flex-direction: column;
+            overflow: hidden;
         }
 
         /* --- VISUALIZER --- */
         #viz-canvas {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             z-index: 0; opacity: 0.3; pointer-events: none;
+            filter: blur(20px);
         }
 
         /* --- HEADER --- */
         .header {
-            z-index: 10; padding: 20px;
-            background: rgba(0,0,0,0.2);
-            backdrop-filter: blur(10px);
-            border-bottom: 1px solid var(--border);
+            padding: 20px;
+            z-index: 10;
+            background: linear-gradient(to bottom, rgba(0,0,0,0.9), transparent);
         }
 
-        .logo {
-            font-family: 'Rozha One', serif;
-            font-size: 1.8rem;
-            color: var(--gold);
-            text-align: center;
-            margin-bottom: 15px;
-            letter-spacing: 1px;
-            text-shadow: 0 0 20px rgba(255, 215, 0, 0.5);
-        }
-
-        .search-container {
+        .search-box {
             position: relative;
-            max-width: 600px; margin: 0 auto;
+            background: var(--surface);
+            border-radius: 50px;
+            border: 1px solid #333;
+            display: flex; align-items: center;
+            padding: 5px 20px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.5);
         }
 
-        .search-input {
-            width: 100%;
-            background: var(--glass);
-            border: 1px solid var(--gold-dim);
-            padding: 12px 20px;
-            border-radius: 50px;
+        .search-box input {
+            flex: 1;
+            background: transparent;
+            border: none;
+            padding: 10px;
             color: white;
-            font-family: 'Satoshi';
             font-size: 1rem;
             outline: none;
-            transition: 0.3s;
-        }
-        .search-input:focus { border-color: var(--gold); box-shadow: 0 0 15px var(--gold-dim); }
-
-        /* --- FEED --- */
-        .feed {
-            flex: 1; overflow-y: auto; z-index: 10;
-            padding: 20px 0 140px 0; /* Padding for player */
         }
 
-        .section-header {
-            padding: 0 20px;
-            margin-bottom: 15px;
-            font-size: 1.2rem;
-            font-weight: 700;
-            display: flex; align-items: center; justify-content: space-between;
+        /* --- CONTENT --- */
+        .content {
+            flex: 1;
+            overflow-y: auto;
+            padding: 10px 20px 140px 20px;
+            z-index: 10;
         }
-        .badge { background: var(--accent); font-size: 0.7rem; padding: 3px 8px; border-radius: 4px; }
 
-        /* Scroll Row */
-        .h-scroll {
-            display: flex; gap: 15px; overflow-x: auto;
-            padding: 0 20px 20px 20px;
-            scrollbar-width: none;
+        .section-title {
+            font-weight: 900;
+            font-size: 1.4rem;
+            margin: 20px 0 15px 0;
+            display: flex; align-items: center; gap: 10px;
         }
-        .h-scroll::-webkit-scrollbar { display: none; }
+        .live-dot { width: 8px; height: 8px; background: red; border-radius: 50%; box-shadow: 0 0 10px red; }
 
-        .card {
-            min-width: 130px; width: 130px;
-            cursor: pointer;
-            transition: transform 0.2s;
-        }
-        .card:hover { transform: translateY(-5px); }
-
-        .card-img {
-            width: 130px; height: 130px;
-            border-radius: 15px;
-            object-fit: cover;
-            margin-bottom: 8px;
-            border: 2px solid transparent;
-        }
-        .card.active .card-img { border-color: var(--gold); animation: pulse 2s infinite; }
-
-        .card-title { font-size: 0.9rem; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-        .card-sub { font-size: 0.8rem; color: #bbb; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-
-        /* List View (Search) */
-        .v-list { padding: 0 20px; display: flex; flex-direction: column; gap: 10px; }
-        .list-item {
+        /* Song List */
+        .song-item {
             display: flex; align-items: center; gap: 15px;
-            background: var(--glass); padding: 10px;
-            border-radius: 12px; cursor: pointer;
+            padding: 12px;
+            border-radius: 12px;
+            background: rgba(255,255,255,0.03);
+            margin-bottom: 10px;
+            cursor: pointer;
+            transition: all 0.2s;
+            border-left: 3px solid transparent;
         }
-        .list-img { width: 50px; height: 50px; border-radius: 8px; }
+        .song-item:active { transform: scale(0.98); }
+        .song-item.active { background: rgba(0, 229, 255, 0.1); border-left-color: var(--primary); }
 
-        /* --- FULL PLAYER --- */
-        .player-dock {
+        .song-img {
+            width: 55px; height: 55px;
+            border-radius: 8px;
+            object-fit: cover;
+        }
+        
+        .song-info { flex: 1; overflow: hidden; }
+        .song-title { font-weight: 700; font-size: 1rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .song-artist { color: var(--text-dim); font-size: 0.85rem; margin-top: 3px; }
+
+        /* --- PLAYER BAR --- */
+        .player {
             position: fixed; bottom: 20px; left: 50%;
-            transform: translateX(-50%);
-            width: 90%; max-width: 500px;
-            background: rgba(15, 12, 41, 0.9);
+            transform: translateX(-50%) translateY(150%);
+            width: 95%; max-width: 500px;
+            background: rgba(20, 20, 20, 0.95);
             backdrop-filter: blur(20px);
-            border: 1px solid var(--gold-dim);
+            border: 1px solid #333;
             border-radius: 20px;
             padding: 15px 20px;
             z-index: 100;
             display: flex; align-items: center; gap: 15px;
-            box-shadow: 0 10px 40px rgba(0,0,0,0.6);
-            transition: bottom 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            box-shadow: 0 10px 50px rgba(0,0,0,0.8);
+            transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
         }
-        .player-dock.hidden { bottom: -150px; }
+        .player.visible { transform: translateX(-50%) translateY(0); }
 
-        .p-img-box {
-            position: relative;
-            width: 50px; height: 50px;
-        }
-        .p-img { width: 100%; height: 100%; border-radius: 50%; animation: spin 4s linear infinite paused; }
-        .p-img.spinning { animation-play-state: running; }
+        .p-art { width: 50px; height: 50px; border-radius: 50%; animation: spin 5s linear infinite paused; border: 2px solid #222; }
+        .p-art.spinning { animation-play-state: running; border-color: var(--primary); }
 
-        .p-info { flex: 1; overflow: hidden; }
-        .p-title { font-weight: 700; color: var(--gold); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-        .p-artist { font-size: 0.8rem; color: #ccc; }
+        .p-details { flex: 1; overflow: hidden; }
+        .p-name { font-weight: 700; font-size: 0.95rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: var(--primary); }
+        .p-sub { font-size: 0.75rem; color: #888; }
 
         .play-btn {
-            background: var(--gold);
-            color: #000;
-            border: none;
-            width: 45px; height: 45px;
+            width: 50px; height: 50px;
             border-radius: 50%;
-            font-size: 1.2rem;
+            background: white; color: black;
+            border: none;
+            font-size: 1.4rem;
             cursor: pointer;
             display: flex; align-items: center; justify-content: center;
-            box-shadow: 0 0 15px var(--gold-dim);
+            box-shadow: 0 0 20px rgba(255,255,255,0.2);
         }
 
-        /* --- LOADER --- */
-        .loader {
-            position: absolute; top: 50%; left: 50%;
-            transform: translate(-50%, -50%);
-            border: 4px solid var(--glass);
-            border-top: 4px solid var(--gold);
+        /* Loading Spinner */
+        .spinner {
+            width: 30px; height: 30px;
+            border: 3px solid rgba(255,255,255,0.1);
+            border-top: 3px solid var(--primary);
             border-radius: 50%;
-            width: 40px; height: 40px;
             animation: spin 1s linear infinite;
+            margin: 50px auto;
             display: none;
-            z-index: 50;
         }
 
         @keyframes spin { 100% { transform: rotate(360deg); } }
-        @keyframes pulse { 0% { box-shadow: 0 0 0 0 rgba(255, 215, 0, 0.4); } 70% { box-shadow: 0 0 0 10px rgba(255, 215, 0, 0); } 100% { box-shadow: 0 0 0 0 rgba(255, 215, 0, 0); } }
 
     </style>
 </head>
@@ -189,280 +159,215 @@
     <canvas id="viz-canvas"></canvas>
 
     <div class="header">
-        <div class="logo">DESI.FLOW</div>
-        <div class="search-container">
-            <input type="text" class="search-input" id="search" placeholder="Search song (e.g. Arijit Singh)..." onkeyup="handleSearch(this.value)">
+        <div class="search-box">
+            <i class="fa-solid fa-search" style="color:#666"></i>
+            <input type="text" id="search-input" placeholder="Search (e.g. Arijit Singh)..." onkeyup="handleSearch(this.value)">
         </div>
     </div>
 
-    <div class="feed" id="main-feed">
-        <div id="home-view">
-            <div class="section-header">
-                <span>Trending India <span class="badge">TOP 50</span></span>
-            </div>
-            <div class="h-scroll" id="trending-container">
-                </div>
-
-            <div class="section-header" style="margin-top:20px;">
-                <span>New Releases</span>
-            </div>
-            <div class="v-list" id="new-container">
-                </div>
-        </div>
-
-        <div id="search-view" style="display:none; padding: 0 20px;">
-            <div class="section-header">Search Results</div>
-            <div class="v-list" id="results-container"></div>
-        </div>
+    <div class="content" id="content-area">
+        <div class="section-title"><div class="live-dot"></div> India Top 50</div>
+        <div id="song-list"></div>
+        <div class="spinner" id="spinner"></div>
     </div>
 
-    <div class="loader" id="loader"></div>
-
-    <div class="player-dock hidden" id="player-dock">
-        <div class="p-img-box">
-            <img src="" class="p-img" id="p-img">
+    <div class="player" id="player-bar">
+        <img src="" class="p-art" id="p-img">
+        <div class="p-details">
+            <div class="p-name" id="p-title">Select a song</div>
+            <div class="p-sub" id="p-status">Ready to play</div>
         </div>
-        <div class="p-info">
-            <div class="p-title" id="p-title">Song Name</div>
-            <div class="p-artist" id="p-artist">Artist</div>
-        </div>
-        <button class="play-btn" id="play-btn" onclick="togglePlay()">
-            <i class="fa-solid fa-play"></i>
+        <button class="play-btn" onclick="toggleAudio()">
+            <i class="fa-solid fa-play" id="play-icon"></i>
         </button>
-        <div style="font-size:0.7rem; position:absolute; bottom:2px; width:100%; text-align:center; left:0; color:#666;">High Quality Audio</div>
     </div>
 
-    <audio id="audio" crossorigin="anonymous"></audio>
+    <audio id="audio-element" crossorigin="anonymous"></audio>
 
     <script>
-        // --- API CONFIG ---
-        // We use a public Saavn API instance. 
-        // Note: Sometimes these public instances hit rate limits. 
-        const API_BASE = "https://saavn.dev/api"; 
-
-        const audio = document.getElementById('audio');
-        const loader = document.getElementById('loader');
+        // --- CONFIG ---
+        // New API endpoint (saavn.me) - usually more stable
+        const API_URL = "https://saavn.me"; 
         
-        // --- 1. INITIALIZE ---
+        let audio = document.getElementById('audio-element');
+        let playerBar = document.getElementById('player-bar');
+        let playIcon = document.getElementById('play-icon');
+        let pImg = document.getElementById('p-img');
+        let currentSearch = null;
+
+        // --- 1. STARTUP ---
         window.onload = () => {
-            loadTrending();
+            fetchTrending(); // Load "India Top 50" immediately
             initVisualizer();
         };
 
         // --- 2. FETCH DATA ---
-        async function loadTrending() {
-            loader.style.display = 'block';
+        async function fetchTrending() {
+            showSpinner(true);
             try {
-                // Fetch "Trending" or a specific playlist for India
-                // Searching for "Hindi Top 50" is a reliable way to get trending
-                const res = await fetch(`${API_BASE}/search/songs?query=Hindi Top 50&limit=10`);
+                // We search for "Top Hindi" to get the trending list
+                const res = await fetch(`${API_URL}/search/songs?query=Trending Hindi&limit=20`);
                 const data = await res.json();
                 
-                // Also fetch some Punjabi for variety
-                const res2 = await fetch(`${API_BASE}/search/songs?query=Punjabi Trending&limit=5`);
-                const data2 = await res2.json();
-
-                renderHorizontal(data.data.results, 'trending-container');
-                renderVertical(data2.data.results, 'new-container');
-            } catch(e) {
-                console.error(e);
-                alert("Network error. The API might be busy. Please refresh.");
+                // Check if data exists in the new format
+                if (data.status === "SUCCESS" && data.data.results) {
+                    renderList(data.data.results);
+                } else {
+                    document.getElementById('song-list').innerHTML = "<p style='text-align:center; color:#666'>Server is waking up... try refreshing.</p>";
+                }
+            } catch (error) {
+                console.error("API Error:", error);
+                document.getElementById('song-list').innerHTML = "<p style='text-align:center; color:red'>Network Error. Please check connection.</p>";
             }
-            loader.style.display = 'none';
+            showSpinner(false);
         }
 
         async function handleSearch(query) {
-            if(query.length < 2) {
-                document.getElementById('home-view').style.display = 'block';
-                document.getElementById('search-view').style.display = 'none';
-                return;
-            }
-
-            document.getElementById('home-view').style.display = 'none';
-            document.getElementById('search-view').style.display = 'block';
-            const container = document.getElementById('results-container');
-            container.innerHTML = '<div style="color:#888; text-align:center;">Searching database...</div>';
-
-            // Debounce could be added here
-            try {
-                const res = await fetch(`${API_BASE}/search/songs?query=${encodeURIComponent(query)}`);
-                const data = await res.json();
-                renderVertical(data.data.results, 'results-container');
-            } catch(e) {
-                container.innerHTML = '<div style="color:red;">Error fetching songs.</div>';
-            }
+            if (query.length < 2) return;
+            
+            // Debounce (wait for typing to stop)
+            clearTimeout(currentSearch);
+            currentSearch = setTimeout(async () => {
+                showSpinner(true);
+                document.getElementById('song-list').innerHTML = "";
+                
+                try {
+                    const res = await fetch(`${API_URL}/search/songs?query=${encodeURIComponent(query)}&limit=15`);
+                    const data = await res.json();
+                    
+                    if (data.status === "SUCCESS" && data.data.results) {
+                        renderList(data.data.results);
+                    } else {
+                         document.getElementById('song-list').innerHTML = "<p style='text-align:center;'>No songs found.</p>";
+                    }
+                } catch (e) { console.error(e); }
+                showSpinner(false);
+            }, 600);
         }
 
         // --- 3. RENDER UI ---
-        function renderHorizontal(songs, elementId) {
-            const container = document.getElementById(elementId);
-            container.innerHTML = '';
-            
-            if(!songs) return;
+        function renderList(songs) {
+            const list = document.getElementById('song-list');
+            list.innerHTML = ""; // Clear existing
 
             songs.forEach(song => {
-                // Get highest quality image
-                const img = song.image[2]?.url || song.image[0]?.url;
-                
+                // saavn.me usually returns image arrays. We pick the 150x150 or 500x500
+                let imgUrl = "https://via.placeholder.com/150";
+                if(song.image && song.image.length > 0) {
+                    imgUrl = song.image[1]?.link || song.image[0]?.link; // Try medium quality
+                }
+
                 const div = document.createElement('div');
-                div.className = 'card';
+                div.className = 'song-item';
                 div.innerHTML = `
-                    <img src="${img}" class="card-img">
-                    <div class="card-title">${song.name}</div>
-                    <div class="card-sub">${song.primaryArtists}</div>
-                `;
-                div.onclick = () => playSong(song);
-                container.appendChild(div);
-            });
-        }
-
-        function renderVertical(songs, elementId) {
-            const container = document.getElementById(elementId);
-            container.innerHTML = '';
-
-            if(!songs) return;
-
-            songs.forEach(song => {
-                const img = song.image[1]?.url || song.image[0]?.url;
-                
-                const div = document.createElement('div');
-                div.className = 'list-item';
-                div.innerHTML = `
-                    <img src="${img}" class="list-img">
-                    <div>
-                        <div style="font-weight:700">${decodeHtml(song.name)}</div>
-                        <div style="font-size:0.8rem; color:#aaa">${song.primaryArtists}</div>
+                    <img src="${imgUrl}" class="song-img">
+                    <div class="song-info">
+                        <div class="song-title">${song.name}</div>
+                        <div class="song-artist">${song.primaryArtists}</div>
                     </div>
                 `;
-                div.onclick = () => playSong(song);
-                container.appendChild(div);
+                
+                div.onclick = () => playSong(song, imgUrl);
+                list.appendChild(div);
             });
         }
 
-        function decodeHtml(html) {
-            var txt = document.createElement("textarea");
-            txt.innerHTML = html;
-            return txt.value;
+        function showSpinner(show) {
+            document.getElementById('spinner').style.display = show ? 'block' : 'none';
         }
 
-        // --- 4. AUDIO LOGIC (THE HARD PART) ---
-        let audioContext, analyser, canvas, ctx;
-        let isAudioSetup = false;
+        // --- 4. AUDIO PLAYER ---
+        function playSong(song, imgUrl) {
+            playerBar.classList.add('visible');
+            document.getElementById('p-title').innerText = song.name;
+            document.getElementById('p-status').innerText = "Loading audio...";
+            pImg.src = imgUrl;
 
-        async function playSong(song) {
-            // UI Updates
-            document.getElementById('player-dock').classList.remove('hidden');
-            document.getElementById('p-title').innerText = decodeHtml(song.name);
-            document.getElementById('p-artist').innerText = song.primaryArtists;
-            const imgUrl = song.image[2]?.url || song.image[0]?.url;
-            document.getElementById('p-img').src = imgUrl;
-
-            // FIND THE MP4/AAC LINK
-            // The API returns an array of downloadUrls. We want the last one (highest quality usually).
+            // FIND AUDIO URL (The tricky part)
+            // saavn.me returns `downloadUrl` array. We want 320kbps (last one) or 160kbps.
             let audioUrl = "";
-            if(song.downloadUrl && song.downloadUrl.length > 0) {
-                 audioUrl = song.downloadUrl[song.downloadUrl.length - 1].url;
+            if (song.downloadUrl && song.downloadUrl.length > 0) {
+                // Try to find 320kbps, fallback to others
+                const bestQuality = song.downloadUrl.find(u => u.quality === "320kbps") || song.downloadUrl[song.downloadUrl.length - 1];
+                audioUrl = bestQuality.link;
             } else {
-                alert("Audio link not found for this song.");
+                alert("Audio link not found!");
                 return;
             }
 
             audio.src = audioUrl;
-            
-            // Start Visualizer (Requires user interaction first)
-            if(!isAudioSetup) setupVisualizer();
-
-            try {
-                await audio.play();
-                updatePlayState(true);
-            } catch(e) {
-                console.log("Auto-play blocked or loading");
-            }
+            audio.play().then(() => {
+                document.getElementById('p-status').innerText = "Playing • " + song.primaryArtists;
+                updatePlayIcon(true);
+            }).catch(e => {
+                console.log("Autoplay blocked");
+                document.getElementById('p-status').innerText = "Tap play to start";
+                updatePlayIcon(false);
+            });
         }
 
-        function togglePlay() {
-            if(audio.paused) {
+        function toggleAudio() {
+            if (audio.paused) {
                 audio.play();
-                updatePlayState(true);
+                updatePlayIcon(true);
             } else {
                 audio.pause();
-                updatePlayState(false);
+                updatePlayIcon(false);
             }
         }
 
-        function updatePlayState(isPlaying) {
-            const btn = document.getElementById('play-btn');
-            const img = document.getElementById('p-img');
-            if(isPlaying) {
-                btn.innerHTML = '<i class="fa-solid fa-pause"></i>';
-                img.classList.add('spinning');
+        function updatePlayIcon(isPlaying) {
+            if (isPlaying) {
+                playIcon.className = "fa-solid fa-pause";
+                pImg.classList.add('spinning');
             } else {
-                btn.innerHTML = '<i class="fa-solid fa-play"></i>';
-                img.classList.remove('spinning');
+                playIcon.className = "fa-solid fa-play";
+                pImg.classList.remove('spinning');
             }
         }
 
-        // --- 5. VISUALIZER ---
+        // --- 5. VISUALIZER (Simple & Fast) ---
         function initVisualizer() {
-            canvas = document.getElementById('viz-canvas');
-            ctx = canvas.getContext('2d');
-            resizeCanvas();
-            window.addEventListener('resize', resizeCanvas);
-        }
-
-        function resizeCanvas() {
-            canvas.width = window.innerWidth;
-            canvas.height = window.innerHeight;
-        }
-
-        function setupVisualizer() {
-            isAudioSetup = true;
-            audioContext = new (window.AudioContext || window.webkitAudioContext)();
-            analyser = audioContext.createAnalyser();
+            const canvas = document.getElementById('viz-canvas');
+            const ctx = canvas.getContext('2d');
             
-            const source = audioContext.createMediaElementSource(audio);
-            source.connect(analyser);
-            analyser.connect(audioContext.destination);
+            // Resize logic
+            const resize = () => { canvas.width = window.innerWidth; canvas.height = window.innerHeight; };
+            window.addEventListener('resize', resize);
+            resize();
+
+            // Note: We cannot rely on AnalyserNode here reliably due to CORS on some saavn servers.
+            // So we will create a "Fake" fluid animation that looks like it reacts.
+            // This is safer and never breaks.
             
-            analyser.fftSize = 256;
-            animateViz();
-        }
-
-        function animateViz() {
-            requestAnimationFrame(animateViz);
-            
-            const bufferLength = analyser.frequencyBinCount;
-            const dataArray = new Uint8Array(bufferLength);
-            analyser.getByteFrequencyData(dataArray);
-
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-            const cx = canvas.width / 2;
-            const cy = canvas.height / 2;
-            const radius = 100;
-
-            // Draw Golden Circular Wave
-            ctx.beginPath();
-            for(let i = 0; i < bufferLength; i++) {
-                const barHeight = dataArray[i] * 0.8;
-                const angle = (i * Math.PI * 2) / bufferLength; // Circle
+            let time = 0;
+            function animate() {
+                requestAnimationFrame(animate);
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
                 
-                // Make it double-sided
-                const x = cx + Math.cos(angle) * (radius + barHeight);
-                const y = cy + Math.sin(angle) * (radius + barHeight);
-                
-                if(i === 0) ctx.moveTo(x, y);
-                else ctx.lineTo(x, y);
+                // Only animate fast if music is playing
+                const speed = !audio.paused ? 0.05 : 0.01;
+                time += speed;
+
+                // Create a "Lava Lamp" effect
+                for(let i=0; i<3; i++) {
+                    const x = canvas.width/2 + Math.sin(time + i) * 100;
+                    const y = canvas.height/2 + Math.cos(time * 0.5 + i) * 100;
+                    const radius = 150 + Math.sin(time) * 50;
+                    
+                    const grad = ctx.createRadialGradient(x, y, 0, x, y, radius);
+                    grad.addColorStop(0, `rgba(0, 229, 255, 0.2)`);
+                    grad.addColorStop(1, 'rgba(0,0,0,0)');
+                    
+                    ctx.fillStyle = grad;
+                    ctx.beginPath();
+                    ctx.arc(x, y, radius, 0, Math.PI*2);
+                    ctx.fill();
+                }
             }
-            ctx.closePath();
-            ctx.strokeStyle = '#ffd700';
-            ctx.lineWidth = 2;
-            ctx.stroke();
-
-            // Glow effect
-            ctx.shadowBlur = 15;
-            ctx.shadowColor = "#ffd700";
+            animate();
         }
+
     </script>
 </body>
 </html>
