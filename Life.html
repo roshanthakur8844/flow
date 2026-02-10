@@ -2,501 +2,441 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>FLUX.WAVE</title>
-    <link href="https://api.fontshare.com/v2/css?f[]=clash-display@600,700&f[]=satoshi@300,500,700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>SONIC.PRISM | Infinite Music</title>
     
+    <link href="https://api.fontshare.com/v2/css?f[]=satoshi@300,500,700,900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
     <style>
         :root {
-            --bg: #050505;
-            --accent: #ff3e3e; /* Radical Red */
-            --accent-glow: rgba(255, 62, 62, 0.4);
+            --bg: #000000;
+            --glass: rgba(255, 255, 255, 0.08);
+            --border: rgba(255, 255, 255, 0.15);
+            --primary: #00ff88; /* Cyber Green */
+            --secondary: #00ccff; /* Cyber Blue */
             --text: #ffffff;
-            --surface: rgba(255, 255, 255, 0.03);
-            --glass-border: rgba(255, 255, 255, 0.08);
         }
 
-        * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+        * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
 
         body {
-            background: var(--bg);
+            background-color: var(--bg);
             color: var(--text);
             font-family: 'Satoshi', sans-serif;
             height: 100vh;
             overflow: hidden;
             display: flex;
             flex-direction: column;
-            justify-content: center;
-            align-items: center;
         }
 
-        /* --- BACKGROUND VISUALIZER --- */
-        #canvas-viz {
-            position: fixed;
-            top: 0; left: 0;
-            width: 100%; height: 100%;
-            z-index: 0;
-            opacity: 0.6;
-            filter: blur(40px) contrast(1.5);
+        /* --- VISUALIZER BACKGROUND --- */
+        #viz-canvas {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            z-index: 0; opacity: 0.4; pointer-events: none;
         }
 
-        /* --- UI LAYER --- */
-        .player-container {
+        /* --- HEADER & SEARCH --- */
+        .header {
+            position: relative; z-index: 10;
+            padding: 20px;
+            background: linear-gradient(to bottom, #000, transparent);
+        }
+
+        .search-box {
             position: relative;
-            z-index: 10;
             width: 100%;
-            max-width: 450px;
-            height: 100%;
-            display: flex;
-            flex-direction: column;
-            justify-content: space-between;
-            padding: 40px 25px;
-            background: linear-gradient(to bottom, transparent, rgba(0,0,0,0.8));
+            max-width: 600px;
+            margin: 0 auto;
         }
 
-        /* Top Bar */
-        .top-bar {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            font-family: 'Clash Display', sans-serif;
-            letter-spacing: 1px;
+        .search-input {
+            width: 100%;
+            background: var(--glass);
+            border: 1px solid var(--border);
+            padding: 15px 50px 15px 20px;
+            border-radius: 30px;
+            color: white;
+            font-family: inherit;
+            font-size: 1rem;
+            backdrop-filter: blur(10px);
+            outline: none;
+            transition: all 0.3s;
+        }
+
+        .search-input:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 20px rgba(0, 255, 136, 0.2);
+        }
+
+        .search-icon {
+            position: absolute; right: 20px; top: 50%;
+            transform: translateY(-50%);
+            color: #aaa;
+        }
+
+        /* --- MAIN SCROLL AREA --- */
+        .content-area {
+            flex: 1;
+            overflow-y: auto;
+            position: relative; z-index: 10;
+            padding-bottom: 120px; /* Space for player */
+        }
+
+        .section-title {
+            font-weight: 900;
+            font-size: 1.5rem;
+            margin: 20px;
             text-transform: uppercase;
-            font-size: 0.9rem;
-            opacity: 0;
-            animation: slideDown 1s ease forwards 0.5s;
-        }
-
-        .tagline { color: #666; font-size: 0.7rem; }
-
-        /* Album Art Area */
-        .art-wrapper {
-            flex-grow: 1;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            position: relative;
-        }
-
-        .disc-container {
-            width: 280px;
-            height: 280px;
-            position: relative;
-            perspective: 1000px;
-        }
-
-        .disc {
-            width: 100%;
-            height: 100%;
-            border-radius: 50%;
-            background: #111;
-            position: relative;
-            box-shadow: 0 20px 50px rgba(0,0,0,0.5);
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            overflow: hidden;
-            transition: transform 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-            border: 2px solid var(--glass-border);
-        }
-
-        .disc img {
-            width: 100%; height: 100%; object-fit: cover; opacity: 0.8;
-            animation: rotate 20s linear infinite;
-            animation-play-state: paused;
-        }
-        
-        .disc.playing img { animation-play-state: running; }
-        .disc.playing { box-shadow: 0 0 40px var(--accent-glow); border-color: var(--accent); }
-
-        /* Center Hole */
-        .disc::after {
-            content: ''; position: absolute;
-            width: 40px; height: 40px;
-            background: var(--bg);
-            border-radius: 50%;
-            border: 2px solid var(--glass-border);
-            z-index: 5;
-        }
-
-        /* Song Info */
-        .info-area {
-            text-align: center;
-            margin-bottom: 30px;
-        }
-
-        .song-title {
-            font-family: 'Clash Display', sans-serif;
-            font-size: 2rem;
-            font-weight: 700;
-            margin-bottom: 5px;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            background: linear-gradient(to right, #fff, #aaa);
+            letter-spacing: 1px;
+            background: linear-gradient(to right, #fff, #666);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
         }
 
-        .artist-name {
-            color: #888;
-            font-weight: 500;
-            text-transform: uppercase;
-            letter-spacing: 2px;
-            font-size: 0.8rem;
-        }
-
-        /* Controls */
-        .controls-area {
-            background: rgba(20, 20, 20, 0.6);
-            backdrop-filter: blur(20px);
-            border: 1px solid var(--glass-border);
-            border-radius: 30px;
-            padding: 25px;
-            transform: translateY(100px);
-            opacity: 0;
-            animation: slideUp 0.8s cubic-bezier(0.23, 1, 0.32, 1) forwards 0.2s;
-        }
-
-        /* Progress Bar */
-        .progress-container {
-            width: 100%;
-            height: 6px;
-            background: rgba(255,255,255,0.1);
-            border-radius: 10px;
-            margin-bottom: 25px;
-            cursor: pointer;
-            position: relative;
-            overflow: hidden;
-        }
-
-        .progress-fill {
-            height: 100%;
-            width: 0%;
-            background: var(--accent);
-            border-radius: 10px;
-            position: relative;
-            box-shadow: 0 0 15px var(--accent);
-        }
-
-        .time-stamps {
-            display: flex; justify-content: space-between;
-            font-size: 0.75rem; color: #555; margin-top: 8px; font-weight: 600;
-        }
-
-        /* Buttons */
-        .buttons-row {
+        /* --- TRENDING (Horizontal) --- */
+        .trending-row {
             display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 0 10px;
+            gap: 15px;
+            padding: 0 20px;
+            overflow-x: auto;
+            scrollbar-width: none;
+        }
+        .trending-row::-webkit-scrollbar { display: none; }
+
+        .trend-card {
+            min-width: 140px;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+        .trend-card:hover { transform: scale(1.05); }
+
+        .trend-img {
+            width: 140px; height: 140px;
+            border-radius: 15px;
+            object-fit: cover;
+            margin-bottom: 8px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.5);
         }
 
-        .btn {
-            background: none; border: none; color: white;
-            font-size: 1.5rem; cursor: pointer;
-            opacity: 0.7; transition: all 0.2s;
-        }
-        .btn:hover { opacity: 1; transform: scale(1.1); }
-        .btn:active { transform: scale(0.9); }
+        .trend-title { font-weight: 700; font-size: 0.9rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .trend-artist { color: #888; font-size: 0.8rem; }
 
-        .btn-main {
-            width: 70px; height: 70px;
-            background: white; color: black;
-            border-radius: 50%;
-            display: flex; align-items: center; justify-content: center;
-            font-size: 1.8rem;
-            opacity: 1;
-            box-shadow: 0 0 20px rgba(255,255,255,0.2);
+        /* --- SEARCH RESULTS (Vertical) --- */
+        .results-list {
+            padding: 0 20px;
+            display: flex; flex-direction: column; gap: 10px;
         }
 
-        /* File Input */
-        .file-upload-btn {
-            position: absolute; top: 0; left: 0;
-            width: 100%; height: 100%; opacity: 0;
-            cursor: pointer; z-index: 100;
+        .result-item {
+            display: flex; align-items: center; gap: 15px;
+            background: rgba(255,255,255,0.03);
+            padding: 10px;
+            border-radius: 12px;
+            cursor: pointer;
+            border: 1px solid transparent;
         }
+        .result-item:hover { background: rgba(255,255,255,0.1); border-color: var(--border); }
         
-        .upload-icon { position: relative; }
+        .res-img { width: 50px; height: 50px; border-radius: 8px; }
+        .res-info { flex: 1; }
+        .res-play { width: 30px; height: 30px; border-radius: 50%; background: var(--primary); color: #000; display: flex; align-items: center; justify-content: center; opacity: 0; }
+        .result-item:hover .res-play { opacity: 1; }
 
-        /* Animations */
-        @keyframes rotate { 100% { transform: rotate(360deg); } }
-        @keyframes slideUp { to { transform: translateY(0); opacity: 1; } }
-        @keyframes slideDown { to { transform: translateY(0); opacity: 1; } }
-
-        /* Start Overlay */
-        #start-overlay {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: #000; z-index: 999;
-            display: flex; flex-direction: column;
-            align-items: center; justify-content: center;
-            transition: opacity 0.5s;
+        /* --- PLAYER BAR (Bottom) --- */
+        .player-bar {
+            position: fixed; bottom: 0; left: 0; width: 100%;
+            height: 100px;
+            background: rgba(10, 10, 10, 0.9);
+            backdrop-filter: blur(20px);
+            border-top: 1px solid var(--border);
+            z-index: 100;
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 0 20px;
+            transform: translateY(100%);
+            transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
         }
-        .start-btn {
-            padding: 15px 40px;
-            border: 1px solid #333;
-            background: transparent;
-            color: white;
-            font-family: 'Clash Display';
+        .player-bar.active { transform: translateY(0); }
+
+        .p-info { display: flex; align-items: center; gap: 15px; width: 60%; }
+        
+        /* SPINNING VINYL ANIMATION */
+        .p-art-box {
+            width: 60px; height: 60px;
+            position: relative;
+            flex-shrink: 0;
+        }
+        .p-art {
+            width: 100%; height: 100%;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 2px solid #222;
+            animation: spin 5s linear infinite;
+            animation-play-state: paused;
+        }
+        .p-art.spinning { animation-play-state: running; }
+        .p-art-center {
+            position: absolute; top: 50%; left: 50%;
+            width: 15px; height: 15px;
+            background: #000;
+            border-radius: 50%;
+            transform: translate(-50%, -50%);
+            border: 2px solid #444;
+        }
+
+        .p-text { overflow: hidden; }
+        .p-title { font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: var(--primary); }
+        .p-artist { font-size: 0.8rem; color: #aaa; }
+
+        .p-controls { display: flex; align-items: center; gap: 20px; }
+        
+        .btn-play {
+            width: 50px; height: 50px;
+            border-radius: 50%;
+            background: white; color: black;
+            border: none;
             font-size: 1.2rem;
             cursor: pointer;
-            margin-top: 20px;
-            letter-spacing: 2px;
-            transition: 0.3s;
+            display: flex; align-items: center; justify-content: center;
+            box-shadow: 0 0 15px rgba(255,255,255,0.3);
         }
-        .start-btn:hover { background: white; color: black; }
 
+        @keyframes spin { 100% { transform: rotate(360deg); } }
+
+        /* Loading State */
+        .loader { text-align: center; color: #555; margin-top: 50px; display: none; }
     </style>
 </head>
 <body>
 
-    <canvas id="canvas-viz"></canvas>
+    <canvas id="viz-canvas"></canvas>
 
-    <div id="start-overlay">
-        <h1 style="font-family:'Clash Display'; font-size:3rem; margin-bottom:10px;">FLUX</h1>
-        <p style="color:#666; letter-spacing:1px;">AUDIO EXPERIENCE</p>
-        <button class="start-btn" onclick="initAudio()">ENTER</button>
+    <div class="header">
+        <div class="search-box">
+            <input type="text" class="search-input" id="search-input" placeholder="Search song, artist, album..." onkeyup="handleSearch(this.value)">
+            <i class="fa-solid fa-search search-icon"></i>
+        </div>
     </div>
 
-    <div class="player-container">
-        <div class="top-bar">
-            <span>FLUX.WAVE</span>
-            <span class="tagline">METRO // MODE</span>
-            <div class="upload-icon btn">
-                <i class="fa-solid fa-folder-open"></i>
-                <input type="file" id="file-input" class="file-upload-btn" accept="audio/*">
-            </div>
-        </div>
-
-        <div class="art-wrapper">
-            <div class="disc-container">
-                <div class="disc" id="disc">
-                    <img src="https://images.unsplash.com/photo-1614613535308-eb5fbd3d2c17?q=80&w=1000&auto=format&fit=crop" id="album-art" alt="art">
+    <div class="content-area">
+        <div id="trending-section">
+            <div class="section-title">Global Trending <span style="font-size:0.8rem; color:var(--primary)">LIVE</span></div>
+            <div class="trending-row" id="trending-container">
                 </div>
-            </div>
         </div>
 
-        <div class="info-area">
-            <h2 class="song-title" id="title">Nightcall</h2>
-            <p class="artist-name" id="artist">Kavinsky (Demo)</p>
-        </div>
-
-        <div class="controls-area">
-            <div class="progress-container" id="progress-container">
-                <div class="progress-fill" id="progress-fill"></div>
-            </div>
-            <div class="time-stamps">
-                <span id="curr-time">0:00</span>
-                <span id="dur-time">0:00</span>
-            </div>
-
-            <div class="buttons-row">
-                <button class="btn" onclick="prevSong()"><i class="fa-solid fa-backward-step"></i></button>
-                <button class="btn-main" onclick="togglePlay()" id="play-btn"><i class="fa-solid fa-play"></i></button>
-                <button class="btn" onclick="nextSong()"><i class="fa-solid fa-forward-step"></i></button>
-            </div>
+        <div id="search-section" style="display:none;">
+            <div class="section-title">Search Results</div>
+            <div class="loader" id="loader">Searching the frequency...</div>
+            <div class="results-list" id="results-container">
+                </div>
         </div>
     </div>
 
-    <audio id="audio" crossOrigin="anonymous"></audio>
+    <div class="player-bar" id="player-bar">
+        <div class="p-info">
+            <div class="p-art-box">
+                <img src="" class="p-art" id="p-art">
+                <div class="p-art-center"></div>
+            </div>
+            <div class="p-text">
+                <div class="p-title" id="p-title">Song Title</div>
+                <div class="p-artist" id="p-artist">Artist Name</div>
+            </div>
+        </div>
+        <div class="p-controls">
+            <button class="btn-play" id="play-btn" onclick="togglePlay()">
+                <i class="fa-solid fa-play"></i>
+            </button>
+        </div>
+    </div>
+
+    <audio id="audio-player" crossorigin="anonymous"></audio>
 
     <script>
-        // --- DATA ---
-        // Default Copyright Free Tracks (For demo purposes)
-        const defaultTracks = [
-            {
-                title: "Cyberpunk City",
-                artist: "Infraction",
-                src: "https://files.freemusicarchive.org/storage-freemusicarchive-org/music/no_curator/Tours/Enthusiast/Tours_-_01_-_Enthusiast.mp3", // Placeholder
-                img: "https://images.unsplash.com/photo-1614613535308-eb5fbd3d2c17?q=80&w=600&auto=format&fit=crop"
-            },
-            {
-                title: "Night Drive",
-                artist: "Lofi Beats",
-                src: "https://files.freemusicarchive.org/storage-freemusicarchive-org/music/ccCommunity/Chad_Crouch/Arps/Chad_Crouch_-_Elips.mp3", // Placeholder
-                img: "https://images.unsplash.com/photo-1493225255756-d9584f8606e9?q=80&w=600&auto=format&fit=crop"
-            }
-        ];
-
-        let tracks = [...defaultTracks];
-        let currentIdx = 0;
-        let isPlaying = false;
-        let audioContext, analyser, source, canvas, ctx;
-
-        // --- ELEMENTS ---
-        const audio = document.getElementById('audio');
-        const titleEl = document.getElementById('title');
-        const artistEl = document.getElementById('artist');
-        const artEl = document.getElementById('album-art');
+        // --- VARIABLES ---
+        const audio = document.getElementById('audio-player');
         const playBtn = document.getElementById('play-btn');
-        const disc = document.getElementById('disc');
-        const progressFill = document.getElementById('progress-fill');
-        const progressContainer = document.getElementById('progress-container');
+        const pArt = document.getElementById('p-art');
+        const playerBar = document.getElementById('player-bar');
+        let searchTimeout;
+        let audioContext, analyser, canvas, ctx, source;
+        let isAudioInit = false;
 
-        // --- INIT AUDIO CONTEXT (VISUALIZER) ---
-        function initAudio() {
-            document.getElementById('start-overlay').style.opacity = '0';
-            setTimeout(() => document.getElementById('start-overlay').remove(), 500);
+        // --- 1. INITIALIZE (Load Trending) ---
+        window.onload = () => {
+            fetchTrending();
+            initVisualizer();
+        };
 
-            // Web Audio API setup
+        // --- 2. FETCH TRENDING (Top Hits) ---
+        async function fetchTrending() {
+            // Using a generic search term 'hits' or 'top' simulates trending in iTunes API
+            const url = `https://itunes.apple.com/search?term=top+hits&entity=song&limit=10`;
+            try {
+                const res = await fetch(url);
+                const data = await res.json();
+                renderTrending(data.results);
+            } catch(e) { console.error(e); }
+        }
+
+        function renderTrending(songs) {
+            const container = document.getElementById('trending-container');
+            container.innerHTML = '';
+            songs.forEach(song => {
+                const div = document.createElement('div');
+                div.className = 'trend-card';
+                // High res image hack: replace 100x100 with 600x600
+                const hiResImg = song.artworkUrl100.replace('100x100', '400x400');
+                
+                div.innerHTML = `
+                    <img src="${hiResImg}" class="trend-img">
+                    <div class="trend-title">${song.trackName}</div>
+                    <div class="trend-artist">${song.artistName}</div>
+                `;
+                div.onclick = () => playSong(song);
+                container.appendChild(div);
+            });
+        }
+
+        // --- 3. SEARCH FUNCTION ---
+        function handleSearch(query) {
+            clearTimeout(searchTimeout);
+            const trendSec = document.getElementById('trending-section');
+            const searchSec = document.getElementById('search-section');
+            const loader = document.getElementById('loader');
+            const container = document.getElementById('results-container');
+
+            if(query.length < 2) {
+                trendSec.style.display = 'block';
+                searchSec.style.display = 'none';
+                return;
+            }
+
+            trendSec.style.display = 'none';
+            searchSec.style.display = 'block';
+            container.innerHTML = '';
+            loader.style.display = 'block';
+
+            searchTimeout = setTimeout(async () => {
+                const url = `https://itunes.apple.com/search?term=${encodeURIComponent(query)}&entity=song&limit=15`;
+                try {
+                    const res = await fetch(url);
+                    const data = await res.json();
+                    loader.style.display = 'none';
+                    
+                    data.results.forEach(song => {
+                        const div = document.createElement('div');
+                        div.className = 'result-item';
+                        div.innerHTML = `
+                            <img src="${song.artworkUrl60}" class="res-img">
+                            <div class="res-info">
+                                <div style="font-weight:700; color:#fff">${song.trackName}</div>
+                                <div style="color:#888; font-size:0.8rem">${song.artistName}</div>
+                            </div>
+                            <div class="res-play"><i class="fa-solid fa-play"></i></div>
+                        `;
+                        div.onclick = () => playSong(song);
+                        container.appendChild(div);
+                    });
+                } catch(e) { loader.innerText = "Error fetching beats."; }
+            }, 500);
+        }
+
+        // --- 4. PLAYER LOGIC ---
+        function playSong(song) {
+            // Setup Visualizer Context on first click (Browser Policy)
+            if(!isAudioInit) {
+                setupAudioContext();
+                isAudioInit = true;
+            }
+
+            // Update UI
+            playerBar.classList.add('active');
+            document.getElementById('p-title').innerText = song.trackName;
+            document.getElementById('p-artist').innerText = song.artistName;
+            pArt.src = song.artworkUrl100;
+            
+            // Audio
+            audio.src = song.previewUrl;
+            audio.play();
+            updatePlayBtn(true);
+        }
+
+        function togglePlay() {
+            if(audio.paused) {
+                audio.play();
+                updatePlayBtn(true);
+            } else {
+                audio.pause();
+                updatePlayBtn(false);
+            }
+        }
+
+        function updatePlayBtn(playing) {
+            if(playing) {
+                playBtn.innerHTML = '<i class="fa-solid fa-pause"></i>';
+                pArt.classList.add('spinning');
+            } else {
+                playBtn.innerHTML = '<i class="fa-solid fa-play"></i>';
+                pArt.classList.remove('spinning');
+            }
+        }
+
+        // --- 5. AUDIO VISUALIZER (CREATIVITY) ---
+        function initVisualizer() {
+            canvas = document.getElementById('viz-canvas');
+            ctx = canvas.getContext('2d');
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+            
+            window.addEventListener('resize', () => {
+                canvas.width = window.innerWidth;
+                canvas.height = window.innerHeight;
+            });
+        }
+
+        function setupAudioContext() {
             audioContext = new (window.AudioContext || window.webkitAudioContext)();
             analyser = audioContext.createAnalyser();
             source = audioContext.createMediaElementSource(audio);
             source.connect(analyser);
             analyser.connect(audioContext.destination);
-            analyser.fftSize = 256;
-
-            // Start Canvas Animation
-            initCanvas();
-            loadTrack(currentIdx);
-        }
-
-        // --- PLAYER FUNCTIONS ---
-        function loadTrack(index) {
-            const track = tracks[index];
-            titleEl.textContent = track.title;
-            artistEl.textContent = track.artist;
-            artEl.src = track.img;
-            audio.src = track.src;
-            if(isPlaying) playTrack();
-        }
-
-        function playTrack() {
-            // Resume context if suspended (browser policy)
-            if (audioContext && audioContext.state === 'suspended') {
-                audioContext.resume();
-            }
+            analyser.fftSize = 128;
             
-            audio.play();
-            isPlaying = true;
-            playBtn.innerHTML = '<i class="fa-solid fa-pause"></i>';
-            disc.classList.add('playing');
+            animateViz();
         }
 
-        function pauseTrack() {
-            audio.pause();
-            isPlaying = false;
-            playBtn.innerHTML = '<i class="fa-solid fa-play"></i>';
-            disc.classList.remove('playing');
-        }
-
-        function togglePlay() {
-            if (isPlaying) pauseTrack();
-            else playTrack();
-        }
-
-        function nextSong() {
-            currentIdx = (currentIdx + 1) % tracks.length;
-            loadTrack(currentIdx);
-            playTrack();
-        }
-
-        function prevSong() {
-            currentIdx = (currentIdx - 1 + tracks.length) % tracks.length;
-            loadTrack(currentIdx);
-            playTrack();
-        }
-
-        // --- PROGRESS BAR ---
-        audio.addEventListener('timeupdate', (e) => {
-            const { duration, currentTime } = e.srcElement;
-            const progressPercent = (currentTime / duration) * 100;
-            progressFill.style.width = `${progressPercent}%`;
-            
-            // Update time text
-            document.getElementById('curr-time').innerText = formatTime(currentTime);
-            document.getElementById('dur-time').innerText = formatTime(duration || 0);
-        });
-
-        audio.addEventListener('ended', nextSong);
-
-        progressContainer.addEventListener('click', (e) => {
-            const width = progressContainer.clientWidth;
-            const clickX = e.offsetX;
-            const duration = audio.duration;
-            audio.currentTime = (clickX / width) * duration;
-        });
-
-        function formatTime(seconds) {
-            const min = Math.floor(seconds / 60);
-            const sec = Math.floor(seconds % 60);
-            return `${min}:${sec < 10 ? '0' + sec : sec}`;
-        }
-
-        // --- FILE UPLOAD (LOCAL MUSIC) ---
-        document.getElementById('file-input').addEventListener('change', function(e) {
-            const file = e.target.files[0];
-            if (file) {
-                const objectUrl = URL.createObjectURL(file);
-                
-                // Add to playlist as next song
-                tracks.splice(currentIdx + 1, 0, {
-                    title: file.name.replace(/\.[^/.]+$/, ""), // Remove extension
-                    artist: "Local File",
-                    src: objectUrl,
-                    img: "https://images.unsplash.com/photo-1619983081563-430f63602796?q=80&w=600&auto=format&fit=crop" // Generic Art
-                });
-                
-                nextSong(); // Play it immediately
-            }
-        });
-
-        // --- CANVAS VISUALIZER (The "Crazy" Part) ---
-        function initCanvas() {
-            canvas = document.getElementById('canvas-viz');
-            ctx = canvas.getContext('2d');
-            canvas.width = window.innerWidth;
-            canvas.height = window.innerHeight;
-
+        function animateViz() {
+            requestAnimationFrame(animateViz);
             const bufferLength = analyser.frequencyBinCount;
-            constdataArray = new Uint8Array(bufferLength);
             const dataArray = new Uint8Array(bufferLength);
+            analyser.getByteFrequencyData(dataArray);
 
-            function animate() {
-                requestAnimationFrame(animate);
-                analyser.getByteFrequencyData(dataArray);
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            const barWidth = (canvas.width / bufferLength) * 2.5;
+            let barHeight;
+            let x = 0;
 
-                ctx.fillStyle = 'rgba(5, 5, 5, 0.1)'; // Trail effect
-                ctx.fillRect(0, 0, canvas.width, canvas.height);
+            for(let i = 0; i < bufferLength; i++) {
+                barHeight = dataArray[i] * 2; // Amplify
+                
+                // Cyber Gradient Colors
+                const r = barHeight + (25 * (i/bufferLength));
+                const g = 250 * (i/bufferLength);
+                const b = 50;
 
-                const cx = canvas.width / 2;
-                const cy = canvas.height / 2;
-                const radius = 150;
+                ctx.fillStyle = `rgba(${r},${g},${b}, 0.5)`;
+                // Draw mirrored bars from center for cool effect
+                // ctx.fillRect(x, canvas.height - barHeight, barWidth, barHeight); 
+                
+                // Draw floating bars
+                ctx.fillRect(x, (canvas.height/2) - (barHeight/2), barWidth, barHeight);
 
-                // Draw circular visualizer behind the disc
-                for (let i = 0; i < bufferLength; i++) {
-                    const barHeight = dataArray[i] * 1.5;
-                    const angle = (i * Math.PI * 2) / bufferLength; // Circular layout
-                    
-                    const x = cx + Math.cos(angle) * (radius + barHeight / 2);
-                    const y = cy + Math.sin(angle) * (radius + barHeight / 2);
-                    
-                    ctx.beginPath();
-                    ctx.moveTo(cx + Math.cos(angle) * radius, cy + Math.sin(angle) * radius);
-                    ctx.lineTo(x, y);
-                    
-                    // Dynamic Color based on frequency
-                    const r = barHeight + 25 * (i/bufferLength);
-                    const g = 50;
-                    const b = 255 - barHeight;
-                    
-                    ctx.strokeStyle = `rgb(${r},${g},${b})`;
-                    ctx.lineWidth = 4;
-                    ctx.lineCap = 'round';
-                    ctx.stroke();
-                }
+                x += barWidth + 1;
             }
-
-            animate();
         }
-
-        // Resize canvas on window resize
-        window.addEventListener('resize', () => {
-            canvas.width = window.innerWidth;
-            canvas.height = window.innerHeight;
-        });
-
     </script>
 </body>
 </html>
