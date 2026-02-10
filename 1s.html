@@ -1,0 +1,468 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>DESI.FLOW | Full Music Player</title>
+    
+    <link href="https://api.fontshare.com/v2/css?f[]=satoshi@300,500,700,900&f[]=rozha-one@400&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <style>
+        :root {
+            --bg: #0f0c29;
+            --bg-gradient: linear-gradient(to right, #24243e, #302b63, #0f0c29);
+            --gold: #ffd700;
+            --gold-dim: rgba(255, 215, 0, 0.2);
+            --glass: rgba(255, 255, 255, 0.05);
+            --border: rgba(255, 255, 255, 0.1);
+            --text: #ffffff;
+            --accent: #ff0055;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+        body {
+            background: var(--bg-gradient);
+            color: var(--text);
+            font-family: 'Satoshi', sans-serif;
+            height: 100vh;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* --- VISUALIZER --- */
+        #viz-canvas {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            z-index: 0; opacity: 0.3; pointer-events: none;
+        }
+
+        /* --- HEADER --- */
+        .header {
+            z-index: 10; padding: 20px;
+            background: rgba(0,0,0,0.2);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid var(--border);
+        }
+
+        .logo {
+            font-family: 'Rozha One', serif;
+            font-size: 1.8rem;
+            color: var(--gold);
+            text-align: center;
+            margin-bottom: 15px;
+            letter-spacing: 1px;
+            text-shadow: 0 0 20px rgba(255, 215, 0, 0.5);
+        }
+
+        .search-container {
+            position: relative;
+            max-width: 600px; margin: 0 auto;
+        }
+
+        .search-input {
+            width: 100%;
+            background: var(--glass);
+            border: 1px solid var(--gold-dim);
+            padding: 12px 20px;
+            border-radius: 50px;
+            color: white;
+            font-family: 'Satoshi';
+            font-size: 1rem;
+            outline: none;
+            transition: 0.3s;
+        }
+        .search-input:focus { border-color: var(--gold); box-shadow: 0 0 15px var(--gold-dim); }
+
+        /* --- FEED --- */
+        .feed {
+            flex: 1; overflow-y: auto; z-index: 10;
+            padding: 20px 0 140px 0; /* Padding for player */
+        }
+
+        .section-header {
+            padding: 0 20px;
+            margin-bottom: 15px;
+            font-size: 1.2rem;
+            font-weight: 700;
+            display: flex; align-items: center; justify-content: space-between;
+        }
+        .badge { background: var(--accent); font-size: 0.7rem; padding: 3px 8px; border-radius: 4px; }
+
+        /* Scroll Row */
+        .h-scroll {
+            display: flex; gap: 15px; overflow-x: auto;
+            padding: 0 20px 20px 20px;
+            scrollbar-width: none;
+        }
+        .h-scroll::-webkit-scrollbar { display: none; }
+
+        .card {
+            min-width: 130px; width: 130px;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+        .card:hover { transform: translateY(-5px); }
+
+        .card-img {
+            width: 130px; height: 130px;
+            border-radius: 15px;
+            object-fit: cover;
+            margin-bottom: 8px;
+            border: 2px solid transparent;
+        }
+        .card.active .card-img { border-color: var(--gold); animation: pulse 2s infinite; }
+
+        .card-title { font-size: 0.9rem; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .card-sub { font-size: 0.8rem; color: #bbb; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+        /* List View (Search) */
+        .v-list { padding: 0 20px; display: flex; flex-direction: column; gap: 10px; }
+        .list-item {
+            display: flex; align-items: center; gap: 15px;
+            background: var(--glass); padding: 10px;
+            border-radius: 12px; cursor: pointer;
+        }
+        .list-img { width: 50px; height: 50px; border-radius: 8px; }
+
+        /* --- FULL PLAYER --- */
+        .player-dock {
+            position: fixed; bottom: 20px; left: 50%;
+            transform: translateX(-50%);
+            width: 90%; max-width: 500px;
+            background: rgba(15, 12, 41, 0.9);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--gold-dim);
+            border-radius: 20px;
+            padding: 15px 20px;
+            z-index: 100;
+            display: flex; align-items: center; gap: 15px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.6);
+            transition: bottom 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+        .player-dock.hidden { bottom: -150px; }
+
+        .p-img-box {
+            position: relative;
+            width: 50px; height: 50px;
+        }
+        .p-img { width: 100%; height: 100%; border-radius: 50%; animation: spin 4s linear infinite paused; }
+        .p-img.spinning { animation-play-state: running; }
+
+        .p-info { flex: 1; overflow: hidden; }
+        .p-title { font-weight: 700; color: var(--gold); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .p-artist { font-size: 0.8rem; color: #ccc; }
+
+        .play-btn {
+            background: var(--gold);
+            color: #000;
+            border: none;
+            width: 45px; height: 45px;
+            border-radius: 50%;
+            font-size: 1.2rem;
+            cursor: pointer;
+            display: flex; align-items: center; justify-content: center;
+            box-shadow: 0 0 15px var(--gold-dim);
+        }
+
+        /* --- LOADER --- */
+        .loader {
+            position: absolute; top: 50%; left: 50%;
+            transform: translate(-50%, -50%);
+            border: 4px solid var(--glass);
+            border-top: 4px solid var(--gold);
+            border-radius: 50%;
+            width: 40px; height: 40px;
+            animation: spin 1s linear infinite;
+            display: none;
+            z-index: 50;
+        }
+
+        @keyframes spin { 100% { transform: rotate(360deg); } }
+        @keyframes pulse { 0% { box-shadow: 0 0 0 0 rgba(255, 215, 0, 0.4); } 70% { box-shadow: 0 0 0 10px rgba(255, 215, 0, 0); } 100% { box-shadow: 0 0 0 0 rgba(255, 215, 0, 0); } }
+
+    </style>
+</head>
+<body>
+
+    <canvas id="viz-canvas"></canvas>
+
+    <div class="header">
+        <div class="logo">DESI.FLOW</div>
+        <div class="search-container">
+            <input type="text" class="search-input" id="search" placeholder="Search song (e.g. Arijit Singh)..." onkeyup="handleSearch(this.value)">
+        </div>
+    </div>
+
+    <div class="feed" id="main-feed">
+        <div id="home-view">
+            <div class="section-header">
+                <span>Trending India <span class="badge">TOP 50</span></span>
+            </div>
+            <div class="h-scroll" id="trending-container">
+                </div>
+
+            <div class="section-header" style="margin-top:20px;">
+                <span>New Releases</span>
+            </div>
+            <div class="v-list" id="new-container">
+                </div>
+        </div>
+
+        <div id="search-view" style="display:none; padding: 0 20px;">
+            <div class="section-header">Search Results</div>
+            <div class="v-list" id="results-container"></div>
+        </div>
+    </div>
+
+    <div class="loader" id="loader"></div>
+
+    <div class="player-dock hidden" id="player-dock">
+        <div class="p-img-box">
+            <img src="" class="p-img" id="p-img">
+        </div>
+        <div class="p-info">
+            <div class="p-title" id="p-title">Song Name</div>
+            <div class="p-artist" id="p-artist">Artist</div>
+        </div>
+        <button class="play-btn" id="play-btn" onclick="togglePlay()">
+            <i class="fa-solid fa-play"></i>
+        </button>
+        <div style="font-size:0.7rem; position:absolute; bottom:2px; width:100%; text-align:center; left:0; color:#666;">High Quality Audio</div>
+    </div>
+
+    <audio id="audio" crossorigin="anonymous"></audio>
+
+    <script>
+        // --- API CONFIG ---
+        // We use a public Saavn API instance. 
+        // Note: Sometimes these public instances hit rate limits. 
+        const API_BASE = "https://saavn.dev/api"; 
+
+        const audio = document.getElementById('audio');
+        const loader = document.getElementById('loader');
+        
+        // --- 1. INITIALIZE ---
+        window.onload = () => {
+            loadTrending();
+            initVisualizer();
+        };
+
+        // --- 2. FETCH DATA ---
+        async function loadTrending() {
+            loader.style.display = 'block';
+            try {
+                // Fetch "Trending" or a specific playlist for India
+                // Searching for "Hindi Top 50" is a reliable way to get trending
+                const res = await fetch(`${API_BASE}/search/songs?query=Hindi Top 50&limit=10`);
+                const data = await res.json();
+                
+                // Also fetch some Punjabi for variety
+                const res2 = await fetch(`${API_BASE}/search/songs?query=Punjabi Trending&limit=5`);
+                const data2 = await res2.json();
+
+                renderHorizontal(data.data.results, 'trending-container');
+                renderVertical(data2.data.results, 'new-container');
+            } catch(e) {
+                console.error(e);
+                alert("Network error. The API might be busy. Please refresh.");
+            }
+            loader.style.display = 'none';
+        }
+
+        async function handleSearch(query) {
+            if(query.length < 2) {
+                document.getElementById('home-view').style.display = 'block';
+                document.getElementById('search-view').style.display = 'none';
+                return;
+            }
+
+            document.getElementById('home-view').style.display = 'none';
+            document.getElementById('search-view').style.display = 'block';
+            const container = document.getElementById('results-container');
+            container.innerHTML = '<div style="color:#888; text-align:center;">Searching database...</div>';
+
+            // Debounce could be added here
+            try {
+                const res = await fetch(`${API_BASE}/search/songs?query=${encodeURIComponent(query)}`);
+                const data = await res.json();
+                renderVertical(data.data.results, 'results-container');
+            } catch(e) {
+                container.innerHTML = '<div style="color:red;">Error fetching songs.</div>';
+            }
+        }
+
+        // --- 3. RENDER UI ---
+        function renderHorizontal(songs, elementId) {
+            const container = document.getElementById(elementId);
+            container.innerHTML = '';
+            
+            if(!songs) return;
+
+            songs.forEach(song => {
+                // Get highest quality image
+                const img = song.image[2]?.url || song.image[0]?.url;
+                
+                const div = document.createElement('div');
+                div.className = 'card';
+                div.innerHTML = `
+                    <img src="${img}" class="card-img">
+                    <div class="card-title">${song.name}</div>
+                    <div class="card-sub">${song.primaryArtists}</div>
+                `;
+                div.onclick = () => playSong(song);
+                container.appendChild(div);
+            });
+        }
+
+        function renderVertical(songs, elementId) {
+            const container = document.getElementById(elementId);
+            container.innerHTML = '';
+
+            if(!songs) return;
+
+            songs.forEach(song => {
+                const img = song.image[1]?.url || song.image[0]?.url;
+                
+                const div = document.createElement('div');
+                div.className = 'list-item';
+                div.innerHTML = `
+                    <img src="${img}" class="list-img">
+                    <div>
+                        <div style="font-weight:700">${decodeHtml(song.name)}</div>
+                        <div style="font-size:0.8rem; color:#aaa">${song.primaryArtists}</div>
+                    </div>
+                `;
+                div.onclick = () => playSong(song);
+                container.appendChild(div);
+            });
+        }
+
+        function decodeHtml(html) {
+            var txt = document.createElement("textarea");
+            txt.innerHTML = html;
+            return txt.value;
+        }
+
+        // --- 4. AUDIO LOGIC (THE HARD PART) ---
+        let audioContext, analyser, canvas, ctx;
+        let isAudioSetup = false;
+
+        async function playSong(song) {
+            // UI Updates
+            document.getElementById('player-dock').classList.remove('hidden');
+            document.getElementById('p-title').innerText = decodeHtml(song.name);
+            document.getElementById('p-artist').innerText = song.primaryArtists;
+            const imgUrl = song.image[2]?.url || song.image[0]?.url;
+            document.getElementById('p-img').src = imgUrl;
+
+            // FIND THE MP4/AAC LINK
+            // The API returns an array of downloadUrls. We want the last one (highest quality usually).
+            let audioUrl = "";
+            if(song.downloadUrl && song.downloadUrl.length > 0) {
+                 audioUrl = song.downloadUrl[song.downloadUrl.length - 1].url;
+            } else {
+                alert("Audio link not found for this song.");
+                return;
+            }
+
+            audio.src = audioUrl;
+            
+            // Start Visualizer (Requires user interaction first)
+            if(!isAudioSetup) setupVisualizer();
+
+            try {
+                await audio.play();
+                updatePlayState(true);
+            } catch(e) {
+                console.log("Auto-play blocked or loading");
+            }
+        }
+
+        function togglePlay() {
+            if(audio.paused) {
+                audio.play();
+                updatePlayState(true);
+            } else {
+                audio.pause();
+                updatePlayState(false);
+            }
+        }
+
+        function updatePlayState(isPlaying) {
+            const btn = document.getElementById('play-btn');
+            const img = document.getElementById('p-img');
+            if(isPlaying) {
+                btn.innerHTML = '<i class="fa-solid fa-pause"></i>';
+                img.classList.add('spinning');
+            } else {
+                btn.innerHTML = '<i class="fa-solid fa-play"></i>';
+                img.classList.remove('spinning');
+            }
+        }
+
+        // --- 5. VISUALIZER ---
+        function initVisualizer() {
+            canvas = document.getElementById('viz-canvas');
+            ctx = canvas.getContext('2d');
+            resizeCanvas();
+            window.addEventListener('resize', resizeCanvas);
+        }
+
+        function resizeCanvas() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        }
+
+        function setupVisualizer() {
+            isAudioSetup = true;
+            audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            analyser = audioContext.createAnalyser();
+            
+            const source = audioContext.createMediaElementSource(audio);
+            source.connect(analyser);
+            analyser.connect(audioContext.destination);
+            
+            analyser.fftSize = 256;
+            animateViz();
+        }
+
+        function animateViz() {
+            requestAnimationFrame(animateViz);
+            
+            const bufferLength = analyser.frequencyBinCount;
+            const dataArray = new Uint8Array(bufferLength);
+            analyser.getByteFrequencyData(dataArray);
+
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            const cx = canvas.width / 2;
+            const cy = canvas.height / 2;
+            const radius = 100;
+
+            // Draw Golden Circular Wave
+            ctx.beginPath();
+            for(let i = 0; i < bufferLength; i++) {
+                const barHeight = dataArray[i] * 0.8;
+                const angle = (i * Math.PI * 2) / bufferLength; // Circle
+                
+                // Make it double-sided
+                const x = cx + Math.cos(angle) * (radius + barHeight);
+                const y = cy + Math.sin(angle) * (radius + barHeight);
+                
+                if(i === 0) ctx.moveTo(x, y);
+                else ctx.lineTo(x, y);
+            }
+            ctx.closePath();
+            ctx.strokeStyle = '#ffd700';
+            ctx.lineWidth = 2;
+            ctx.stroke();
+
+            // Glow effect
+            ctx.shadowBlur = 15;
+            ctx.shadowColor = "#ffd700";
+        }
+    </script>
+</body>
+</html>
